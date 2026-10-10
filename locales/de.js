@@ -470,5 +470,6 @@ window.UVSTUDIO_LOCALES.de = {
   "prosigns_crc_mismatch": "Code-CRC-32 stimmt nicht — dieser Slot ist keine unserer veröffentlichten Builds.",
   "prosigns_status_scanning": "App-Slots werden nach {0} durchsucht …",
   "prosigns_scan_failed": "Die App-Slots konnten nicht durchsucht werden.",
-  "prosigns_app_not_found": "Keine {0}-App in den Slots gefunden — installiere sie zuerst im Apps-Tab."
+  "prosigns_app_not_found": "Keine {0}-App in den Slots gefunden — installiere sie zuerst im Apps-Tab.",
+  "prosigns_hint_radio": "Hinweis: Das Funkgerät antwortet nur auf dem Hauptbildschirm am seriellen Port — beende eine laufende Overlay-App, bevor du liest oder schreibst."
 };

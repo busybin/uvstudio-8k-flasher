@@ -470,5 +470,6 @@ window.UVSTUDIO_LOCALES.fr = {
   "prosigns_crc_mismatch": "CRC-32 du code non concordant — ce slot n'est pas une de nos versions publiées.",
   "prosigns_status_scanning": "Recherche de {0} dans les slots …",
   "prosigns_scan_failed": "Impossible de parcourir les slots d'App.",
-  "prosigns_app_not_found": "Aucune App {0} trouvée dans les slots — installez-la d'abord depuis l'onglet Apps."
+  "prosigns_app_not_found": "Aucune App {0} trouvée dans les slots — installez-la d'abord depuis l'onglet Apps.",
+  "prosigns_hint_radio": "Astuce : la radio ne répond au port série que sur son écran principal — quittez toute App overlay en cours avant de lire ou d'écrire."
 };

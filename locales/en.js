@@ -470,5 +470,6 @@ window.UVSTUDIO_LOCALES.en = {
   "prosigns_crc_mismatch": "Code CRC-32 mismatch — that slot is not one of our published builds.",
   "prosigns_status_scanning": "Scanning App slots for {0} …",
   "prosigns_scan_failed": "Could not scan the App slots.",
-  "prosigns_app_not_found": "No {0} App found in any slot — install it from the Apps tab first."
+  "prosigns_app_not_found": "No {0} App found in any slot — install it from the Apps tab first.",
+  "prosigns_hint_radio": "Tip: the radio only answers the serial port on its main screen — exit any overlay App that is running before reading or writing."
 };

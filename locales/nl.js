@@ -470,5 +470,6 @@ window.UVSTUDIO_LOCALES.nl = {
   "prosigns_crc_mismatch": "Code-CRC-32 komt niet overeen — dat slot is geen van onze gepubliceerde builds.",
   "prosigns_status_scanning": "App-slots doorzoeken op {0} …",
   "prosigns_scan_failed": "Kon de app-slots niet doorzoeken.",
-  "prosigns_app_not_found": "Geen {0}-app gevonden in de slots — installeer deze eerst via het tabblad Apps."
+  "prosigns_app_not_found": "Geen {0}-app gevonden in de slots — installeer deze eerst via het tabblad Apps.",
+  "prosigns_hint_radio": "Tip: de radio antwoordt alleen op de seriële poort op het hoofdscherm — sluit een draaiende overlay-app af voordat je leest of schrijft."
 };

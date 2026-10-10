@@ -470,5 +470,6 @@ window.UVSTUDIO_LOCALES.pl = {
   "prosigns_crc_mismatch": "Niezgodność CRC-32 kodu — ten slot nie jest jedną z naszych opublikowanych kompilacji.",
   "prosigns_status_scanning": "Skanowanie slotów w poszukiwaniu {0} …",
   "prosigns_scan_failed": "Nie udało się przeskanować slotów aplikacji.",
-  "prosigns_app_not_found": "Nie znaleziono aplikacji {0} w żadnym slocie — zainstaluj ją najpierw na karcie Apps."
+  "prosigns_app_not_found": "Nie znaleziono aplikacji {0} w żadnym slocie — zainstaluj ją najpierw na karcie Apps.",
+  "prosigns_hint_radio": "Wskazówka: radio odpowiada na porcie szeregowym tylko na ekranie głównym — wyjdź z uruchomionej aplikacji overlay przed odczytem lub zapisem."
 };

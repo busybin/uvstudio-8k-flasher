@@ -28,6 +28,13 @@
     font-variant-numeric: tabular-nums;
 }
 
+/* Warning note: the radio only answers the serial port on its main screen. */
+#pane-tools .prosign-radio-note {
+    border-left: 3px solid currentColor;
+    padding-left: 8px;
+    margin-top: 10px;
+}
+
 /* The two action buttons stay aligned with the target-slot select. */
 #pane-tools .slots-write-row button#prosignInstall,
 #pane-tools .slots-write-row button#prosignReset {

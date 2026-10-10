@@ -470,5 +470,6 @@ window.UVSTUDIO_LOCALES.es = {
   "prosigns_crc_mismatch": "El CRC-32 del código no coincide — esa ranura no es una de nuestras versiones publicadas.",
   "prosigns_status_scanning": "Buscando {0} en las ranuras …",
   "prosigns_scan_failed": "No se pudieron explorar las ranuras de Apps.",
-  "prosigns_app_not_found": "No se encontró ninguna App {0} en las ranuras — instálala primero desde la pestaña Apps."
+  "prosigns_app_not_found": "No se encontró ninguna App {0} en las ranuras — instálala primero desde la pestaña Apps.",
+  "prosigns_hint_radio": "Consejo: la radio solo responde al puerto serie en su pantalla principal — sal de cualquier App overlay en ejecución antes de leer o escribir."
 };
