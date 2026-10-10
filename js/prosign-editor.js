@@ -34,23 +34,28 @@
   const APPS = {
     cw: {
       kind: 'fixed',
-      label: 'CW — Morse transceiver',
+      labelKey: 'prosigns_app_cw',
       local: 'packages/CW-V16.app',
       url: 'https://raw.githubusercontent.com/busybin/uv-k1-k5v3-firmware-f4hwn-8k/v610-8k/archive/apps/v6.1.0/CW-V16.app',
       maxChars: 5,
-      hint: 'Each prosign holds up to 5 characters — the App reserves a fixed 6-byte cell per slot.',
+      hintKey: 'prosigns_hint_fixed',
       defaults: ['', 'CQ', 'DE', 'UR', 'RST', 'R', 'TU', '73', 'AR', 'SK']
     },
     secmsg: {
       kind: 'packed',
-      label: 'SECMSG — encrypted messenger',
+      labelKey: 'prosigns_app_secmsg',
       local: 'packages/SECMSG-V24.app',
       url: 'https://raw.githubusercontent.com/busybin/uv-k1-k5v3-firmware-f4hwn-8k/v610-8k/archive/apps/v6.1.0/SECMSG-V24.app',
       maxChars: 9,
-      hint: 'All prosigns share one fixed-size table; the remaining byte budget is shown while typing.',
+      hintKey: 'prosigns_hint_packed',
       defaults: ['', 'CQ', 'DE', 'UR', 'RST', 'R', 'TU', '73', 'AR', 'SK']
     }
   };
+
+  // Shared translation runtime (studio-i18n.js exposes window.uvStudioI18n).
+  function t(key, ...values) {
+    return window.uvStudioI18n ? window.uvStudioI18n.t(key, ...values) : key;
+  }
 
   // ===================== pure helpers (Node-testable) =====================
 
@@ -235,7 +240,7 @@
 
   // ===================== browser runtime =====================
 
-  let state = { app: null, pkg: null };
+  let state = { app: null, pkg: null, info: null, where: '' };
 
   function el(id) { return document.getElementById(id); }
 
@@ -286,37 +291,52 @@
     const note = el('prosignBudget');
     if (!note) return;
     if (app.kind === 'fixed') {
-      note.textContent = app.hint;
+      note.textContent = '';
       return;
     }
     try {
       const rows = currentRows(app);
       const packed = encodePacked(rows, at.budget);
-      note.textContent = `table ${packed.used} / ${at.budget} bytes — ${packed.used === at.budget ? 'full' : `${at.budget - packed.used} bytes free`}`;
+      const remaining = at.budget - packed.used;
+      const budgetState = remaining === 0
+        ? t('prosigns_budget_full')
+        : t('prosigns_budget_free', remaining);
+      note.textContent = t('prosigns_budget', packed.used, at.budget, budgetState);
     } catch (e) {
       note.textContent = e.message;
     }
+  }
+
+  function renderStatus() {
+    const { app, info } = state;
+    if (!app || !info) return;
+    el('prosignHint').textContent = t(app.hintKey);
+    el('prosignStatus').textContent = t(
+      'prosigns_status_loaded',
+      info.header.name,
+      info.header.version,
+      state.where
+    );
   }
 
   async function loadPackage(kind) {
     const app = APPS[kind];
     if (!app) return;
     const status = el('prosignStatus');
-    status.textContent = 'loading ' + app.label + ' …';
+    status.textContent = t('prosigns_status_loading', t(app.labelKey));
     try {
       const pkg = await fetchPackage(app);
       const info = readRows(pkg, app);
-      state = { app, pkg };
-      renderRows(app, info.rows, info.at);
       const where = app.kind === 'fixed'
         ? `code offset ${info.at.at}`
         : `code offset ${info.at.offsetsAt}`;
-      status.textContent = `${info.header.name} v${info.header.version} — 9 prosign slots, table at ${where}.`;
-      el('prosignHint').textContent = app.hint;
+      state = { app, pkg, info, where };
+      renderRows(app, info.rows, info.at);
+      renderStatus();
       el('prosignInstall').disabled = false;
       el('prosignReset').disabled = false;
     } catch (e) {
-      status.textContent = 'load failed: ' + e.message;
+      status.textContent = t('prosigns_load_failed', e.message);
       el('prosignInstall').disabled = true;
     }
   }
@@ -333,10 +353,9 @@
       }
       window.UVStudioFlash.setAppImageBytes(pkg, name);
       window.UVStudioFlash.installAppToSlot(slot);
-      el('prosignStatus').textContent =
-        `custom build prepared and sent to the installer for slot ${slot + 1} — confirm in the Apps tab.`;
+      el('prosignStatus').textContent = t('prosigns_install_done', slot + 1);
     } catch (e) {
-      el('prosignStatus').textContent = 'install failed: ' + e.message;
+      el('prosignStatus').textContent = t('prosigns_install_failed', e.message);
     }
   }
 
@@ -356,6 +375,13 @@
     el('prosignLoad').addEventListener('click', () => { void loadPackage(select.value); });
     el('prosignInstall').addEventListener('click', installPackage);
     el('prosignReset').addEventListener('click', () => { void loadPackage(select.value); });
+    // Re-render the translated strings when the language changes.
+    window.addEventListener('uvstudio:languagechange', () => {
+      if (state.info) {
+        renderStatus();
+        updateBudget(state.app, state.info.at);
+      }
+    });
     void loadPackage(select.value);
   }
 

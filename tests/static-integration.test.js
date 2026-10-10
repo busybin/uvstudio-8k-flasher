@@ -263,7 +263,7 @@ test('exposes the responsive sidebar toggle to assistive technologies', () => {
 
 test('groups paired maintenance actions into resource views', () => {
   const views = [...html.matchAll(/data-tool-view="([^"]+)"/g)].map(match => match[1]);
-  assert.deepEqual(views, ['flash', 'slots', 'apps', 'external-flash', 'factory-reset', 'calibration', 'logo', 'rf-log']);
+  assert.deepEqual(views, ['flash', 'slots', 'apps', 'prosigns', 'external-flash', 'factory-reset', 'calibration', 'logo', 'rf-log']);
   views.forEach(view => assert.match(html, new RegExp(`id="${view}-content"`)));
   ['dump', 'restore', 'logo-upload', 'logo-dump', 'flash-dump', 'flash-restore'].forEach(action => {
     assert.match(html, new RegExp(`id="${action}-content"[^>]+data-action-panel=`));
@@ -275,11 +275,13 @@ test('keeps Labs-only tools together in the sidebar', () => {
   const externalFlash = html.indexOf('data-route="external-flash"');
   const factoryReset = html.indexOf('data-route="factory-reset"');
   const calibration = html.indexOf('data-route="calibration"');
-  assert.ok(apps >= 0 && externalFlash > apps && factoryReset > externalFlash && calibration > factoryReset);
+  const prosigns = html.indexOf('data-route="prosigns"');
+  assert.ok(apps >= 0 && prosigns > apps && externalFlash > prosigns && factoryReset > externalFlash && calibration > factoryReset);
   assert.match(html, /class="nav-item nav-item-labs" data-route="apps"[^>]+data-name="Apps \(Labs only\)"/);
+  assert.match(html, /class="nav-item nav-item-labs" data-route="prosigns"[^>]+data-tool-view="prosigns"/);
   assert.match(html, /class="nav-item nav-item-labs" data-route="external-flash"[^>]+data-name="External Flash \(Labs only\)"/);
   assert.match(html, /class="nav-item nav-item-labs" data-route="factory-reset"[^>]+data-name="Factory Reset \(Labs only\)"/);
-  assert.equal((html.match(/class="tag" data-i18n="studio_nav_labs_only"/g) || []).length, 3);
+  assert.equal((html.match(/class="tag" data-i18n="studio_nav_labs_only"/g) || []).length, 4);
   assert.match(studioCss, /\.nav-item-labs\s*\{[^}]*gap:\s*8px/);
   assert.match(studioCss, /\.nav-item-labs \.tag\s*\{[^}]*margin-left:\s*auto/);
   assert.match(studioCss, /\.nav-item-labs \.tag\s*\{[^}]*margin-right:\s*0/);
@@ -488,6 +490,27 @@ test('keeps locale dictionaries on the same key set', () => {
   dictionaries.forEach(({ file, dictionary }) => {
     assert.deepEqual(Object.keys(dictionary).sort(), expected, file);
   });
+});
+
+test('resolves every i18n key referenced by the page and modules', () => {
+  const localeDir = path.join(root, 'locales');
+  const context = { window: {} };
+  vm.runInNewContext(fs.readFileSync(path.join(localeDir, 'en.js'), 'utf8'), context);
+  const dictionary = context.window.UVSTUDIO_LOCALES.en;
+
+  const attributeKeys = [];
+  for (const match of html.matchAll(/data-i18n(?:-aria-label)?="([^"]+)"/g)) attributeKeys.push(match[1]);
+  for (const match of html.matchAll(/data-section-i18n="([^"]+)"/g)) attributeKeys.push(match[1]);
+
+  const prosignSource = fs.readFileSync(path.join(root, 'js', 'prosign-editor.js'), 'utf8');
+  const moduleKeys = [];
+  for (const match of prosignSource.matchAll(/\bt\('([a-zA-Z0-9_]+)'/g)) moduleKeys.push(match[1]);
+  for (const match of prosignSource.matchAll(/(?:labelKey|hintKey):\s*'([a-zA-Z0-9_]+)'/g)) moduleKeys.push(match[1]);
+
+  const used = new Set(attributeKeys.concat(moduleKeys));
+  used.forEach(key => assert.ok(key in dictionary, `missing i18n key: ${key}`));
+  assert.ok(attributeKeys.length > 100);
+  assert.ok(moduleKeys.length >= 8);
 });
 
 test('uses one consistent vocabulary for maintenance actions in every locale', () => {

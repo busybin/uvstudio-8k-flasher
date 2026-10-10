@@ -11,7 +11,6 @@
     const paneViewer = document.getElementById("pane-viewer");
     const paneTools = document.getElementById("pane-tools");
     const paneAbout = document.getElementById("pane-about");
-    const paneProsigns = document.getElementById("pane-prosigns");
     const viewLive = document.getElementById("view-live");
     const viewRflog = document.getElementById("view-rflog");
     const hamburgerBtn = document.getElementById("hamburgerMenu");
@@ -186,7 +185,6 @@
         paneViewer.classList.toggle("active", app === "viewer");
         paneTools.classList.toggle("active", app === "tools");
         paneAbout.classList.toggle("active", app === "about");
-        paneProsigns.classList.toggle("active", app === "prosigns");
 
         if (app === "viewer") {
             const viewerMode = view || "live";

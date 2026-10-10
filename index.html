@@ -127,6 +127,17 @@
                 <span class="nav-item-label" data-i18n="studio_nav_apps">Apps</span>
                 <span class="tag" data-i18n="studio_nav_labs_only">Labs only</span>
             </button>
+            <button class="nav-item nav-item-labs" data-route="prosigns" data-app="tools" data-tool-view="prosigns" data-name="Prosigns" data-section-i18n="studio_nav_prosigns">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 7h16"></path>
+                    <path d="M4 12h10"></path>
+                    <path d="M4 17h13"></path>
+                    <circle cx="19" cy="17" r="2"></circle>
+                </svg>
+                <span class="nav-item-label" data-i18n="studio_nav_prosigns">Prosigns</span>
+                <span class="tag" data-i18n="studio_nav_labs_only">Labs only</span>
+            </button>
             <button class="nav-item nav-item-labs" data-route="external-flash" data-app="tools" data-tool-view="external-flash" data-default-action="dump" data-name="External Flash (Labs only)" data-section-i18n="studio_nav_external_flash">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v6M9 12l3 3 3-3"/></svg>
                 <span class="nav-item-label" data-i18n="studio_nav_external_flash">External Flash</span>
@@ -161,17 +172,6 @@
                     <path d="M12 7h.01"></path>
                 </svg>
                 <span class="nav-item-label" data-i18n="studio_nav_about">About</span>
-            </button>
-            <button class="nav-item nav-item-labs" data-route="prosigns" data-app="prosigns"
-                    data-name="Prosigns">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M4 7h16"></path>
-                    <path d="M4 12h10"></path>
-                    <path d="M4 17h13"></path>
-                    <circle cx="19" cy="17" r="2"></circle>
-                </svg>
-                <span class="nav-item-label">Prosigns</span>
             </button>
         </div>
         <div class="sidebar-foot">8K Overlay Flasher · <span id="studioVersion">v—</span></div>
@@ -531,7 +531,7 @@
 
             <div class="tool-view" id="apps-content" role="region" hidden>
                 <section class="section">
-                    <p class="tab-description" id="forkNotice" style="border-left:3px solid currentColor;padding-left:8px"><strong>8K overlay fork</strong> — installs Apps for the <a href="https://github.com/busybin/uv-k1-k5v3-firmware-f4hwn-8k">F4HWN 8K firmware</a> (on-screen <code>F4HWN v6.1.0+8K</code>). <strong>Do not install these on the stock 4&nbsp;KiB firmware</strong> — 8K Apps crash on start there. Firmware images offered below belong to the 8K fork as well.</p>
+                    <p class="tab-description" id="forkNotice" style="border-left:3px solid currentColor;padding-left:8px" data-i18n="fork_banner">8K overlay fork — installs Apps for the F4HWN 8K firmware (on-screen F4HWN v6.1.0+8K). Do not install these on the stock 4 KiB firmware — 8K Apps crash on start there. Firmware images offered below belong to the 8K fork as well.</p>
                 <p class="tab-description" data-i18n="appsDescription">Install small overlay apps (.app) into the radio's external flash and launch them from the F key + 7 menu. Writing only touches the external flash, so the radio stays usable.</p>
                 </section>
                 <section class="section">
@@ -589,6 +589,46 @@
                 </section>
             </div>
 
+            <!-- ── Prosign editor (8K overlay fork) ── -->
+            <div class="tool-view" id="prosigns-content" role="region" hidden>
+                <section class="section">
+                    <p class="tab-description" data-i18n="prosigns_intro"></p>
+                </section>
+                <section class="section">
+                    <div class="slots-write-row">
+                        <label for="prosignApp" data-i18n="prosigns_app_label"></label>
+                        <select id="prosignApp">
+                            <option value="cw" data-i18n="prosigns_app_cw"></option>
+                            <option value="secmsg" data-i18n="prosigns_app_secmsg"></option>
+                        </select>
+                        <button id="prosignLoad" type="button"><span data-i18n="prosigns_reload"></span></button>
+                    </div>
+                    <p class="slot-meta" id="prosignStatus" aria-live="polite"></p>
+                </section>
+                <section class="section">
+                    <table class="slots-table prosign-table">
+                        <thead>
+                            <tr>
+                                <th class="slot-col-idx" data-i18n="prosigns_key_col"></th>
+                                <th data-i18n="prosigns_value_col"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="prosignRows"></tbody>
+                    </table>
+                    <p class="slot-meta" id="prosignBudget"></p>
+                    <p class="tab-description" id="prosignHint"></p>
+                </section>
+                <section class="section">
+                    <div class="slots-write-row">
+                        <label for="prosignSlot" data-i18n="prosigns_slot_label"></label>
+                        <select id="prosignSlot"></select>
+                        <button id="prosignInstall" type="button" disabled><span data-i18n="prosigns_install"></span></button>
+                        <button id="prosignReset" type="button" disabled><span data-i18n="prosigns_reset"></span></button>
+                    </div>
+                    <p class="tab-description" data-i18n="prosigns_custom_note"></p>
+                </section>
+            </div>
+
             <section class="progress-container" id="progressContainer" aria-live="polite">
                 <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                     <div class="progress-fill" id="progressFill"></div>
@@ -630,15 +670,9 @@
                     </svg>
                 </div>
                 <div class="about-heading">
-                    <p class="about-kicker">8K Overlay Flasher</p>
-                    <h1>About this flasher</h1>
-                    <p class="about-intro">
-                        A fork of <a href="https://armel.github.io/uvstudio/" target="_blank" rel="noopener">UV Studio</a>
-                        by Armel F4HWN (Apache-2.0), repointed at the
-                        <strong>F4HWN 8K overlay firmware</strong> and its Apps: the firmware and
-                        App dropdowns read <a href="https://github.com/busybin/uv-k1-k5v3-firmware-f4hwn-8k" target="_blank" rel="noopener">our firmware repository</a>
-                        directly, so one page is all you need.
-                    </p>
+                    <p class="about-kicker" data-i18n="fork_about_kicker">8K Overlay Flasher</p>
+                    <h1 data-i18n="fork_about_title">About this flasher</h1>
+                    <p class="about-intro" data-i18n="fork_about_intro"></p>
                 </div>
                 <dl class="about-details">
                     <div>
@@ -647,7 +681,7 @@
                     </div>
                     <div>
                         <dt data-i18n="studio_about_author">Author</dt>
-                        <dd>busybin — fork of UV Studio by Armel F4HWN</dd>
+                        <dd data-i18n="fork_about_author">busybin — fork of UV Studio by Armel F4HWN</dd>
                     </div>
                     <div>
                         <dt data-i18n="studio_about_operation">Operation</dt>
@@ -658,12 +692,12 @@
                         <dd data-i18n="studio_about_devices">UV-K5 V3 and UV-K1 with PY32F071 MCU</dd>
                     </div>
                 </dl>
-                <p class="about-copy">
+                <p class="about-copy" data-i18n="fork_about_copy">
                     Communication goes straight to the radio through the Web Serial API — no
                     installation, server or account. Desktop Chrome/Edge/ChromeOS only, with the
                     radio plugged into this computer. This fork is published under the Apache
-                    License 2.0; our Apps require the 8K firmware and <strong>crash on start on
-                    the stock 4&nbsp;KiB firmware</strong>.
+                    License 2.0; our Apps require the 8K firmware and crash on start on the stock
+                    4&nbsp;KiB firmware.
                 </p>
                 <nav class="about-links" aria-label="Project documents and repositories">
                     <a href="README.md" target="_blank" rel="noopener">README</a>
@@ -674,56 +708,6 @@
                     <a href="https://github.com/busybin/F4HWN-Encrypted-Messenger-App" target="_blank" rel="noopener">Encrypted messenger App</a>
                 </nav>
             </article>
-        </section>
-
-        <!-- ── Prosign editor (8K overlay fork) ── -->
-        <section class="pane" id="pane-prosigns">
-            <div class="container">
-                <section class="section">
-                    <p class="tab-description">
-                        Edit the <strong>F+digit prosigns</strong> of our overlay Apps and install the
-                        customised package straight into a slot. Everything happens in this page: the
-                        package is fetched from our repository, the prosign table is patched locally,
-                        the package checksum is recomputed and the existing Apps installer writes it.
-                    </p>
-                </section>
-                <section class="section">
-                    <div class="slots-write-row">
-                        <label for="prosignApp">Application</label>
-                        <select id="prosignApp">
-                            <option value="cw">CW — Morse transceiver</option>
-                            <option value="secmsg">SECMSG — encrypted messenger</option>
-                        </select>
-                        <button id="prosignLoad" type="button">(Re)load package</button>
-                    </div>
-                    <p class="slot-meta" id="prosignStatus" aria-live="polite"></p>
-                </section>
-                <section class="section">
-                    <table class="slots-table prosign-table">
-                        <thead>
-                            <tr>
-                                <th class="slot-col-idx">Key</th>
-                                <th>Prosign (max <span id="prosignMax">5</span> chars)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="prosignRows"></tbody>
-                    </table>
-                    <p class="slot-meta" id="prosignBudget"></p>
-                    <p class="tab-description" id="prosignHint"></p>
-                </section>
-                <section class="section">
-                    <div class="slots-write-row">
-                        <label for="prosignSlot">Target slot</label>
-                        <select id="prosignSlot"></select>
-                        <button id="prosignInstall" type="button" disabled>Install custom build</button>
-                        <button id="prosignReset" type="button" disabled>Reset to defaults</button>
-                    </div>
-                    <p class="tab-description">
-                        Installing writes a <em>custom</em> build of the package with your prosigns.
-                        To go back to the shipped defaults, install the App again from the Apps tab.
-                    </p>
-                </section>
-            </div>
         </section>
 
     </main>
@@ -867,7 +851,7 @@
 <script src="js/flash-catalog.js?v=18"></script>
 <script src="js/app-catalog.js?v=4"></script>
 <script src="js/prosign-editor.js?v=1"></script>
-<link rel="stylesheet" href="css/prosign-editor.css?v=1">
+<link rel="stylesheet" href="css/prosign-editor.css?v=2">
 <script src="js/studio.js?v=18"></script>
 <script src="js/studio-flash-counter.js?v=2"></script>
 </body>

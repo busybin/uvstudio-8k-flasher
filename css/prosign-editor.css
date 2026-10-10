@@ -1,13 +1,36 @@
-/* Prosign editor (8K overlay fork) — minimal additions on top of the upstream styles. */
-.prosign-table td { padding: 4px 8px; }
-.prosign-input {
-    font: inherit;
-    color: inherit;
-    background: transparent;
-    border: 1px solid currentColor;
-    border-radius: 4px;
-    padding: 3px 6px;
-    min-width: 90px;
+/* Prosign editor (8K overlay fork).
+   The pane lives inside #pane-tools, so the shared tools styles (sections,
+   selects, buttons, .slots-table) already apply. Only a few field tweaks are
+   needed to keep the table compact and the prosign inputs looking native. */
+
+/* Key column: narrow, labelled like the other index columns. */
+#pane-tools .prosign-table .slot-col-idx,
+#pane-tools .prosign-table tbody th {
+    width: 1%;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
-.prosign-input:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
-#prosignBudget { font-variant-numeric: tabular-nums; }
+
+/* Prosign fields read as Morse text: compact, monospaced, upper-cased. */
+#pane-tools .prosign-table .prosign-input {
+    width: 100%;
+    max-width: 220px;
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* Byte budget line under the table. */
+#pane-tools #prosignBudget {
+    font-variant-numeric: tabular-nums;
+}
+
+/* The two action buttons stay aligned with the target-slot select. */
+#pane-tools .slots-write-row button#prosignInstall,
+#pane-tools .slots-write-row button#prosignReset {
+    margin: 0;
+    min-width: 0;
+}
