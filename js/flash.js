@@ -3516,7 +3516,8 @@ async function appInstallFlow() {
   const assets = appImage.subarray(codeEnd);
   if (appMeta.codeSize === 0 || codeEnd > appImage.length ||
       assets.length !== appMeta.assetSize) { log(t('appBadFile'), 'error'); return; }
-  if (code.length > 0x1000 || assets.length > APP_ASSET_MAX) { log(t('appTooBig'), 'error'); return; }
+  // 8K overlay fork: stock gate is 0x1000 (4 KiB); our firmware runs 0x2000.
+  if (code.length > 0x2000 || assets.length > APP_ASSET_MAX) { log(t('appTooBig'), 'error'); return; }
   const total = code.length + assets.length;
 
   const op = beginToolsOperation('apps-install', true);

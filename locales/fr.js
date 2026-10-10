@@ -311,7 +311,7 @@ window.UVSTUDIO_LOCALES.fr = {
   "appDelete": "Supprimer",
   "appUpdateAction": "Mettre à jour vers {0}",
   "appDetected": "Détecté : {0} · {1} · {2} Ko",
-  "appTooBig": "Cette app dépasse la taille de l'overlay de 4 Kio.",
+  "appTooBig": "Cette app dépasse la taille de l'overlay de 8 Kio.",
   "appBadFile": "Fichier .app invalide (en-tête incorrect).",
   "appsScanning": "Analyse des slots d'apps…",
   "appsScanDone": "Analyse des apps terminée.",

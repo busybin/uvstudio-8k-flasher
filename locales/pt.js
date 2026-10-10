@@ -311,7 +311,7 @@ window.UVSTUDIO_LOCALES.pt = {
   "appDelete": "Delete",
   "appUpdateAction": "Atualizar para {0}",
   "appDetected": "Detected: {0} · {1} · {2} KB",
-  "appTooBig": "This app is too large for the 4 KiB overlay.",
+  "appTooBig": "This app is too large for the 8 KiB overlay.",
   "appBadFile": "Not a valid .app file (bad header).",
   "appsScanning": "Scanning app slots…",
   "appsScanDone": "App scan complete.",
