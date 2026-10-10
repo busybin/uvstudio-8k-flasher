@@ -25,9 +25,9 @@ firmware flashing, CHIRP driver offer — is upstream's code, untouched.
 
 - **Desktop Chrome, Edge or ChromeOS only** (Web Serial API); the radio must be plugged into
   the machine running the browser. Firefox/Safari and phones are not supported.
-- **Apps tab** → *Firmware version* `v6.1.0` → *Application*: pick e.g. **CW V16**,
-  **SECMSG V24** (or any official app) → *Target slot* → **Install app**. The catalog shows the
-  real name and version from each package header.
+- **Apps tab** → *Firmware version* `v6.1.0` → *Application*: pick our **CW** or **SECMSG**
+  App (the starred entries) or any official app → *Target slot* → **Install app**. The catalog
+  shows the real name and version from each package header.
 - **Flash tab** → firmware dropdown: **F4HWN Labs v6.1.0** is our 8K build
   (`f4hwn.labs.8k.v6.1.0.bin`). Flashing it changes the App slot stride, so **re-install every
   App afterwards**.
