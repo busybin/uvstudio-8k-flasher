@@ -1,0 +1,11 @@
+# build artifacts
+*.elf
+*.bin
+*.map
+*.app
+*.app.zip
+__pycache__/
+# local preview copies of the app packages (the public page fetches the archive)
+packages/
+# never publish session memory
+MEMORY.md

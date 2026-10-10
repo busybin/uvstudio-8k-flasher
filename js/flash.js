@@ -599,7 +599,14 @@ window.UVStudioFlash = Object.freeze({
   loadSlotFirmwareFromURL,
   loadAppFromURL,
   clearAppFromCatalog: () => beginAppImageLoad('catalog'),
-  hasFirmware: () => Boolean(firmwareData)
+  hasFirmware: () => Boolean(firmwareData),
+  crc32Bytes,
+  // 8K fork: prosign editor entry points — install a (patched) app image to a slot.
+  setAppImageBytes: (buf, name) => setAppImageBuffer(buf, name),
+  installAppToSlot: (slot) => {
+    if (appTargetSelect) appTargetSelect.value = String(slot);
+    return appInstallFlow();
+  }
 });
 
 function updateFlashButton() {

@@ -162,8 +162,19 @@
                 </svg>
                 <span class="nav-item-label" data-i18n="studio_nav_about">About</span>
             </button>
+            <button class="nav-item nav-item-labs" data-route="prosigns" data-app="prosigns"
+                    data-name="Prosigns">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 7h16"></path>
+                    <path d="M4 12h10"></path>
+                    <path d="M4 17h13"></path>
+                    <circle cx="19" cy="17" r="2"></circle>
+                </svg>
+                <span class="nav-item-label">Prosigns</span>
+            </button>
         </div>
-        <div class="sidebar-foot">UV Studio · <span id="studioVersion">v—</span></div>
+        <div class="sidebar-foot">8K Overlay Flasher · <span id="studioVersion">v—</span></div>
     </aside>
 
     <!-- ═══════════ Stage ═══════════ -->
@@ -665,6 +676,56 @@
             </article>
         </section>
 
+        <!-- ── Prosign editor (8K overlay fork) ── -->
+        <section class="pane" id="pane-prosigns">
+            <div class="container">
+                <section class="section">
+                    <p class="tab-description">
+                        Edit the <strong>F+digit prosigns</strong> of our overlay Apps and install the
+                        customised package straight into a slot. Everything happens in this page: the
+                        package is fetched from our repository, the prosign table is patched locally,
+                        the package checksum is recomputed and the existing Apps installer writes it.
+                    </p>
+                </section>
+                <section class="section">
+                    <div class="slots-write-row">
+                        <label for="prosignApp">Application</label>
+                        <select id="prosignApp">
+                            <option value="cw">CW — Morse transceiver</option>
+                            <option value="secmsg">SECMSG — encrypted messenger</option>
+                        </select>
+                        <button id="prosignLoad" type="button">(Re)load package</button>
+                    </div>
+                    <p class="slot-meta" id="prosignStatus" aria-live="polite"></p>
+                </section>
+                <section class="section">
+                    <table class="slots-table prosign-table">
+                        <thead>
+                            <tr>
+                                <th class="slot-col-idx">Key</th>
+                                <th>Prosign (max <span id="prosignMax">5</span> chars)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prosignRows"></tbody>
+                    </table>
+                    <p class="slot-meta" id="prosignBudget"></p>
+                    <p class="tab-description" id="prosignHint"></p>
+                </section>
+                <section class="section">
+                    <div class="slots-write-row">
+                        <label for="prosignSlot">Target slot</label>
+                        <select id="prosignSlot"></select>
+                        <button id="prosignInstall" type="button" disabled>Install custom build</button>
+                        <button id="prosignReset" type="button" disabled>Reset to defaults</button>
+                    </div>
+                    <p class="tab-description">
+                        Installing writes a <em>custom</em> build of the package with your prosigns.
+                        To go back to the shipped defaults, install the App again from the Apps tab.
+                    </p>
+                </section>
+            </div>
+        </section>
+
     </main>
 </div>
 
@@ -805,6 +866,8 @@
 <script src="js/flash.js?v=44"></script>
 <script src="js/flash-catalog.js?v=18"></script>
 <script src="js/app-catalog.js?v=4"></script>
+<script src="js/prosign-editor.js?v=1"></script>
+<link rel="stylesheet" href="css/prosign-editor.css?v=1">
 <script src="js/studio.js?v=18"></script>
 <script src="js/studio-flash-counter.js?v=2"></script>
 </body>

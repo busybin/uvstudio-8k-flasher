@@ -1,0 +1,13 @@
+/* Prosign editor (8K overlay fork) — minimal additions on top of the upstream styles. */
+.prosign-table td { padding: 4px 8px; }
+.prosign-input {
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    padding: 3px 6px;
+    min-width: 90px;
+}
+.prosign-input:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+#prosignBudget { font-variant-numeric: tabular-nums; }
