@@ -65,7 +65,8 @@
 
   // 8K fork: our own overlay Apps are highlighted in the picker (the star is part
   // of the option text because per-option styling is unreliable across browsers).
-  const OURS = ['cw-v16.app', 'secmsg-v24.app'];
+  // Matched by filename prefix so future versions (CW-V18, SECMSG-V26, …) keep the star.
+  const OURS_PREFIXES = ['cw-v', 'secmsg-v'];
 
   function listApps(items) {
     return (Array.isArray(items) ? items : [])
@@ -73,7 +74,7 @@
       .map(item => ({
         name: item.name,
         label: displayAppName(item.name),
-        ours: OURS.includes(String(item.name).toLowerCase()),
+        ours: OURS_PREFIXES.some(prefix => String(item.name).toLowerCase().startsWith(prefix)),
         size: item.size,
         url: item.download_url
       }))
