@@ -77,10 +77,10 @@ test('takes the rolling build only from the development branch response', () => 
   assert.equal(development[0].download_url, currentDevelopment.download_url);
 });
 
-test('loads the rolling development build from feature_update_v6', () => {
+test('loads the rolling development build from the development branch', () => {
   const source = fs.readFileSync(require.resolve('../js/flash-catalog.js'), 'utf8');
-  assert.match(source, /const DEVELOPMENT_BRANCH = 'feature_update_v6';/);
-  assert.doesNotMatch(source, /feature_update_v5/);
+  assert.match(source, /const DEVELOPMENT_BRANCH = 'v610-8k';/);
+  assert.doesNotMatch(source, /armel\/uv-k1-k5v3-firmware-custom/);
 });
 
 test('routes model-specific and stock firmwares to their groups', () => {

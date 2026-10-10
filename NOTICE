@@ -8,3 +8,23 @@ Copyright 2025 Armel FAUVEAU
 
 UVTools2
 Copyright 2025 Armel FAUVEAU
+
+Modifications by this 8K overlay fork
+-------------------------------------
+
+This repository is a fork of the UV Studio tool published by Armel FAUVEAU
+(https://armel.github.io/uvstudio/, Apache-2.0, derived from K5Viewer and
+UVTools2). The upstream site repository (armel/armel.github.io) also hosts
+the author's homepage and blog; this fork keeps only the uvstudio/ subtree,
+moved to the repository root, and applies the following modifications:
+
+  1. The overlay-App install size gate is raised from 0x1000 (4 KiB) to
+     0x2000 (8 KiB), and the localised "too large" strings say 8 KiB,
+     because the companion firmware doubles the overlay App window.
+  2. The firmware catalog and the overlay-App catalog are repointed at
+     busybin/uv-k1-k5v3-firmware-f4hwn-8k (branch v610-8k), so both
+     dropdowns offer our own builds and Apps.
+  3. A banner in the Apps tab states the 8K firmware requirement.
+  4. .nojekyll was added and GitHub Pages serves the repository root.
+
+All other content is unmodified upstream work.

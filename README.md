@@ -1,93 +1,72 @@
-# UV Studio
+# UV Studio — 8K overlay flasher
 
-UV Studio is a unified browser-based workspace for compatible Quansheng UV-K1
-and UV-K5 radios. It combines the live display and remote control features of
-K5Viewer with the firmware and maintenance tools of UVTools2 in one interface.
-Communication with the radio is performed directly through the Web Serial API.
-No installation, server, dependency, or build step is required.
+> A fork of [armel/uvstudio](https://armel.github.io/uvstudio/) (UV Studio by Armel FAUVEAU,
+> Apache-2.0) repointed at **our own 8K overlay firmware and Apps**, so that everything a
+> Quansheng UV-K1 / UV-K5 V3 owner needs is reachable from **one page** — no hunting for
+> downloads.
+>
+> **Live page: <https://busybin.github.io/uvstudio-8k-flasher/>**
 
-[Open UV Studio](https://armel.github.io/uvstudio/)
+## What this fork changes
 
-## Features
+| # | Change | Why |
+| --- | --- | --- |
+| 1 | Repository slimmed to the UV Studio tool (upstream's homepage/blog content removed) | this fork exists to publish the flasher |
+| 2 | App install size gate `0x1000` → **`0x2000`** (8 KiB) + localised "8 KiB" strings | our firmware doubles the overlay App window |
+| 3 | Firmware catalog → **`busybin/uv-k1-k5v3-firmware-f4hwn-8k`** (branch `v610-8k`) | the dropdown must offer the 8K firmware, not the stock one |
+| 4 | App catalog → same repository (`archive/apps/v6.1.0/`) | the dropdown lists our Apps **and** the official ones |
+| 5 | A banner in the Apps tab stating the 8K requirement | prevents installing 8K Apps on a stock radio |
+| 6 | `.nojekyll` + GitHub Pages (branch `master`, root) | the page is served straight from this repository |
 
-- Real-time 128 × 64 radio display
-- Virtual UV-K1 and UV-K5 keypads with short- and long-press support
-- RF activity log with live entries, session markers, and analytics
-- Firmware flashing from a local binary file or a URL
-- Back up and restore radio calibration data
-- Upload and download custom 128 × 64 boot logos
-- Export the latest RF Log activities as CSV
-- Light and dark themes
-- Global serial connection and operation status
-- Interface translations for ten languages
-- A single consistent interface for viewing, control, and maintenance
+Everything else — display viewer, keypad, RF log, calibration backup/restore, boot logos,
+firmware flashing, CHIRP driver offer — is upstream's code, untouched.
 
-## Requirements
+## Using the page
 
-- A compatible Quansheng UV-K1 or UV-K5 radio
-- A data-capable USB serial cable
-- A desktop browser with Web Serial support, such as Chrome, Brave, Edge, Opera, or Firefox 151+
+- **Desktop Chrome, Edge or ChromeOS only** (Web Serial API); the radio must be plugged into
+  the machine running the browser. Firefox/Safari and phones are not supported.
+- **Apps tab** → *Firmware version* `v6.1.0` → *Application*: pick e.g. **CW V16**,
+  **SECMSG V24** (or any official app) → *Target slot* → **Install app**. The catalog shows the
+  real name and version from each package header.
+- **Flash tab** → firmware dropdown: **F4HWN Labs v6.1.0** is our 8K build
+  (`f4hwn.labs.8k.v6.1.0.bin`). Flashing it changes the App slot stride, so **re-install every
+  App afterwards**.
+- The CHIRP driver offer still resolves from upstream's releases for the matching version —
+  that is intentional, the driver belongs to the upstream firmware version.
 
-## Safety
+## ⚠️ Before installing anything
 
-Flashing an incompatible or corrupted firmware image may leave the radio
-unusable. Verify that the firmware matches the radio model and bootloader,
-back up the calibration data first, and keep the cable connected until every
-write operation is complete.
+1. **Our Apps need the 8K firmware.** Installing an 8K App on the stock 4 KiB firmware makes
+   it crash on start (its `.bss` overruns the stock overlay workspace). The firmware dropdown
+   here is the 8K build.
+2. After flashing the 8K firmware, **re-install all Apps** — the slot stride changed
+   (`0x2000` → `0x3000`).
+3. Unofficial builds of the official Apps are used on purpose: the `APRS RX`/`APRS TX`
+   packages in the catalog carry a stack fix (upstream's freeze on entry under the 8K
+   firmware's 704 B stack).
 
-## Usage
+## Companion repositories
 
-### Live Viewer and RF Log
+| Repository | Contents |
+| --- | --- |
+| [`busybin/uv-k1-k5v3-firmware-f4hwn-8k`](https://github.com/busybin/uv-k1-k5v3-firmware-f4hwn-8k) | the 8K overlay firmware (fork of `armel/uv-k1-k5v3-firmware-custom` v6.1.0) |
+| [`busybin/F4HWN-CW-Morse-App`](https://github.com/busybin/F4HWN-CW-Morse-App) | CW (Morse) transceiver overlay App |
+| [`busybin/F4HWN-Encrypted-Messenger-App`](https://github.com/busybin/F4HWN-Encrypted-Messenger-App) | encrypted messenger overlay App |
 
-1. Connect the radio to the computer with the USB serial cable.
-2. Open UV Studio and select Live Viewer.
-3. Select Connect and choose the radio serial port.
-4. Use the on-screen keypad or keyboard to control the radio.
-5. Open RF Log to inspect live activity or analytics when supported by the firmware.
-6. Select Disconnect before unplugging the cable.
+## Licence & attribution
 
-### Firmware and maintenance tools
+Apache-2.0 (see [LICENSE](LICENSE)). UV Studio is © Armel FAUVEAU, derived from K5Viewer and
+UVTools2 (see [NOTICE](NOTICE)); this fork publishes only the modifications listed above,
+which are © busybin under the same licence. Forking and keeping forks open follows the
+upstream authors' request in the firmware repository.
 
-Use the navigation sidebar to flash firmware, manage calibration data,
-manage the boot logo or external flash, restore a UV-K1 or UV-K5 V3 to its
-reconstructed factory state while preserving calibration, or export the RF Log.
-Follow the instructions
-shown for the selected operation. Keep the radio in normal mode for maintenance
-operations and use DFU mode only when flashing firmware.
+## Keeping the page current
 
-## Run locally
+The firmware and App dropdowns read this fork's own repository
+(`busybin/uv-k1-k5v3-firmware-f4hwn-8k`, branch `v610-8k`, `archive/`), so publishing a new
+build is: drop the new files into that repository's `archive/` and this page offers them —
+no page edit needed.
 
-UV Studio is a static HTML, CSS, and JavaScript application. Open index.html
-directly in a compatible browser. A local web server is not required.
-
-## Project structure
-
-- index.html — unified application markup
-- css/core.css — shared design tokens, controls, and overlays
-- css/studio.css — UV Studio shell and integration styles
-- css/viewer.css — scoped live viewer, keypad, RF Log, and analytics styles
-- css/tools.css — scoped firmware and maintenance tool styles
-- js/studio-version.js — single public UV Studio version
-- js/studio-preferences.js — resilient local and in-memory preference storage
-- js/studio.js — navigation and application coordination
-- js/studio-serial.js — exclusive serial-port ownership, operation locking, and connection state
-- js/k5viewer.js — serial display protocol, keypad, RF Log, and analytics
-- js/flash.js — firmware, calibration, and boot logo operations
-- js/rf-log.js — RF Log packet parsing and CSV generation
-- js/studio-i18n.js — shared translation engine and language preference
-- locales/ — unified dictionaries for Studio, K5Viewer, and UVTools2
-- tests/ — Node.js protocol, controller, locale, and static integration tests
-
-Run the local test suite with `node --test tests/*.test.js`.
-
-## Origin and attribution
-
-UV Studio incorporates K5Viewer and UVTools2. Their original attribution notices
-are retained in [NOTICE](NOTICE).
-
-## License
-
-Copyright 2026 Armel FAUVEAU.
-
-UV Studio is licensed under the [Apache License 2.0](LICENSE). See
-[NOTICE](NOTICE) for attribution information.
+When upstream UV Studio is synced into this fork, re-apply the six changes in the table
+above (see the per-change commits in this repository's history — each one is a standalone
+patch).

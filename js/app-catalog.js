@@ -15,8 +15,10 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  const REPO = 'armel/uv-k1-k5v3-firmware-custom';
-  const BRANCH = 'main';
+  // 8K fork: our own firmware repository holds archive/apps/v<fw>/ (official packages
+  // plus our two overlay Apps); branch v610-8k.
+  const REPO = 'busybin/uv-k1-k5v3-firmware-f4hwn-8k';
+  const BRANCH = 'v610-8k';
   const APPS_PATH = 'archive/apps';
   const API_ROOT = `https://api.github.com/repos/${REPO}/contents`;
 

@@ -18,13 +18,16 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  const REPO = 'armel/uv-k1-k5v3-firmware-custom';
+  // 8K fork: our own firmware repository holds archive/f4hwn.labs.8k.v<ver>.bin.
+  const REPO = 'busybin/uv-k1-k5v3-firmware-f4hwn-8k';
   const ARCHIVE_PATH = 'archive';
-  const STABLE_BRANCH = 'main';
+  const STABLE_BRANCH = 'v610-8k';
   const API_URL =
     `https://api.github.com/repos/${REPO}/contents/${ARCHIVE_PATH}` +
     `?ref=${encodeURIComponent(STABLE_BRANCH)}`;
-  const DEVELOPMENT_BRANCH = 'feature_update_v6';
+  // No rolling development build in this fork: same branch as stable (the dev
+  // filename does not exist there, so no development entry is offered).
+  const DEVELOPMENT_BRANCH = 'v610-8k';
   const DEVELOPMENT_FILENAME = 'f4hwn.fusion.development.bin';
   const DEVELOPMENT_API_URL =
     `https://api.github.com/repos/${REPO}/contents/${ARCHIVE_PATH}/${DEVELOPMENT_FILENAME}` +

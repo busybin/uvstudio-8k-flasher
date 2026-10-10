@@ -34,7 +34,7 @@ test('lists app files alphabetically and ignores unrelated archive entries', () 
 test('targets the stable versioned apps archive on GitHub', () => {
   assert.equal(
     catalog.contentsURL('archive/apps/v6.0.0'),
-    'https://api.github.com/repos/armel/uv-k1-k5v3-firmware-custom/contents/archive/apps/v6.0.0?ref=main'
+    'https://api.github.com/repos/busybin/uv-k1-k5v3-firmware-f4hwn-8k/contents/archive/apps/v6.0.0?ref=v610-8k'
   );
 });
 
