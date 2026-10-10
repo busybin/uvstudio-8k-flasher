@@ -606,7 +606,10 @@ window.UVStudioFlash = Object.freeze({
   installAppToSlot: (slot) => {
     if (appTargetSelect) appTargetSelect.value = String(slot);
     return appInstallFlow();
-  }
+  },
+  // 8K fork: edit the prosigns of an installed App in place (no reinstall).
+  prosignReadApp: (slot) => prosignReadApp(slot),
+  prosignWriteApp: (slot, codeBytes) => prosignWriteApp(slot, codeBytes)
 });
 
 function updateFlashButton() {
@@ -3307,6 +3310,102 @@ async function appWriteChunkRetry(slot, offset, ts, chunk) {
 }
 async function appValidate(slot) {
   return (await slotCommand(MSG_APP_VALIDATE, Uint8Array.of(slot), MSG_APP_VALIDATE_RESP, 20000))[1];
+}
+
+// ========== PROSIGNS (Plan A: edit an installed App in place) ==========
+// The prosign table is compiled into the App code, so the editor rewrites the
+// installed slot instead of reinstalling the package: only the 4 KiB code sector
+// that changed is reprogrammed, then the header's code CRC-32 (checked at launch)
+// is refreshed. External flash only, so the slot's saved config is preserved.
+const APP_REGION_BASE = 0x102000;   // APP_REGION_BASE in app_overlay.h
+const APP_SLOT_STRIDE = 0x3000;     // 4 KiB header sector + 8 KiB code
+
+const appSlotBase = slot => APP_REGION_BASE + slot * APP_SLOT_STRIDE;
+
+async function readExternalFlashRange(address, length, timestamp) {
+  const out = new Uint8Array(length);
+  for (let off = 0; off < length; off += FLASH_DUMP_CHUNK) {
+    const n = Math.min(FLASH_DUMP_CHUNK, length - off);
+    out.set(await readExternalFlashChunk(address + off, n, timestamp), off);
+  }
+  return out;
+}
+
+async function writeExternalFlashRange(address, data, timestamp) {
+  for (let off = 0; off < data.length; off += FLASH_WRITE_CHUNK) {
+    const chunk = data.subarray(off, Math.min(off + FLASH_WRITE_CHUNK, data.length));
+    if (chunk.every(value => value === 0xff)) continue;
+    await writeExternalFlashChunk(address + off, chunk, timestamp);
+  }
+}
+
+async function externalSectorCrc(address, timestamp) {
+  return readExternalFlashCrc32(address, FLASH_SECTOR_SIZE, timestamp);
+}
+
+// Read an installed App's header + code image for the prosign editor.
+async function prosignReadApp(slot) {
+  const op = beginToolsOperation('prosigns-read', true);
+  if (!op) return null;
+  try {
+    if (!port) await connect();
+    readBuffer = []; await sleep(500);
+    const dev = await requestDeviceInfo();
+    if (!(await appsProbe(dev))) return null;
+    const info = await appInfo(slot);
+    if (info.status !== 0 || !info.hdr || info.hdr.codeSize === 0) {
+      throw new Error(t('prosigns_slot_empty'));
+    }
+    const code = await readExternalFlashRange(
+      appSlotBase(slot) + APP_IMG_OFFSET, info.hdr.codeSize, dev.timestamp
+    );
+    if (crc32Bytes(code) !== (info.hdr.codeCrc32 >>> 0)) {
+      throw new Error(t('prosigns_crc_mismatch'));
+    }
+    return {
+      slot, name: info.hdr.name, version: info.hdr.version,
+      codeSize: info.hdr.codeSize, code
+    };
+  } finally {
+    endToolsOperation(op);
+  }
+}
+
+// Program a patched code image back into an installed slot (prosigns changed).
+async function prosignWriteApp(slot, codeBytes) {
+  const op = beginToolsOperation('prosigns-write', true);
+  if (!op) return false;
+  try {
+    if (!port) await connect();
+    readBuffer = []; await sleep(500);
+    const dev = await requestDeviceInfo();
+    if (!(await appsProbe(dev))) return false;
+    const ts = dev.timestamp;
+    const codeBase = appSlotBase(slot) + APP_IMG_OFFSET;   // 4 KiB aligned
+    for (let off = 0; off < codeBytes.length; off += FLASH_SECTOR_SIZE) {
+      const addr = codeBase + off;
+      const sec = new Uint8Array(FLASH_SECTOR_SIZE).fill(0xff);
+      sec.set(codeBytes.subarray(off, Math.min(off + FLASH_SECTOR_SIZE, codeBytes.length)));
+      if (await externalSectorCrc(addr, ts) === crc32Bytes(sec)) continue;   // sector unchanged
+      await eraseExternalFlashSector(addr, ts);
+      await writeExternalFlashRange(addr, sec, ts);
+      if (await externalSectorCrc(addr, ts) !== crc32Bytes(sec)) {
+        throw new Error(t('flashRestoreError', flashAddress(addr)));
+      }
+    }
+    // Header sector: refresh code_crc32 (offset 12) and keep every other byte.
+    const hdrBase = appSlotBase(slot);
+    const hdr = await readExternalFlashRange(hdrBase, FLASH_SECTOR_SIZE, ts);
+    new DataView(hdr.buffer).setUint32(12, crc32Bytes(codeBytes), true);
+    await eraseExternalFlashSector(hdrBase, ts);
+    await writeExternalFlashRange(hdrBase, hdr, ts);
+    if (await externalSectorCrc(hdrBase, ts) !== crc32Bytes(hdr)) {
+      throw new Error(t('flashRestoreError', flashAddress(hdrBase)));
+    }
+    return true;
+  } finally {
+    endToolsOperation(op);
+  }
 }
 
 function appRenderRow(slot, info) {

@@ -505,6 +505,7 @@ test('resolves every i18n key referenced by the page and modules', () => {
   const prosignSource = fs.readFileSync(path.join(root, 'js', 'prosign-editor.js'), 'utf8');
   const moduleKeys = [];
   for (const match of prosignSource.matchAll(/\bt\('([a-zA-Z0-9_]+)'/g)) moduleKeys.push(match[1]);
+  for (const match of prosignSource.matchAll(/setStatus\('([a-zA-Z0-9_]+)'/g)) moduleKeys.push(match[1]);
   for (const match of prosignSource.matchAll(/(?:labelKey|hintKey):\s*'([a-zA-Z0-9_]+)'/g)) moduleKeys.push(match[1]);
 
   const used = new Set(attributeKeys.concat(moduleKeys));

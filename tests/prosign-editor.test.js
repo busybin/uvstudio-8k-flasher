@@ -100,6 +100,41 @@ test('packed table: locate, decode, patch, budget (SECMSG)', () => {
   assert.equal(dv.getUint32(12, true), editor.crc32(patched));
 });
 
+test('radio path: a customised fixed table is found via the build offset', () => {
+  const { code } = synthPackage();
+  const at = editor.findFixedTable(code, editor.APPS.cw.defaults);
+  assert.ok(at > 0);
+  const custom = ['', 'AA', 'BB', 'CC', 'DD', 'EE', 'FF', 'GG', 'HH', 'II'];
+  const patched = code.slice();
+  patched.set(editor.encodeFixed(custom), at);
+  assert.equal(editor.locate(patched, editor.APPS.cw), null, 'pattern-only locator must refuse');
+  const app = Object.assign({}, editor.APPS.cw, { tableAt: at });
+  assert.deepEqual(editor.locateInCode(patched, app), { kind: 'fixed', at, budget: 60 });
+  assert.deepEqual(editor.readCodeRows(patched, app).rows, custom);
+  assert.deepEqual(editor.decodeFixed(editor.patchCode(patched, app, editor.APPS.cw.defaults).code, at),
+    editor.APPS.cw.defaults);
+});
+
+test('radio path: a customised packed table is found via the build offset', () => {
+  const { code } = synthPackage();
+  const at = editor.findPackedTables(code, editor.APPS.secmsg.defaults);
+  assert.ok(at);
+  const custom = ['', 'X', 'Y', 'Z', 'W', 'V', 'U', 'T', 'S', 'R'];
+  const packed = editor.encodePacked(custom, at.budget);
+  const patched = code.slice();
+  patched.set(packed.offsets, at.offsetsAt);
+  patched.set(packed.blob, at.blobAt);
+  const app = Object.assign({}, editor.APPS.secmsg,
+    { offsetsAt: at.offsetsAt, blobAt: at.blobAt, budget: at.budget });
+  assert.equal(editor.locate(patched, app), null);
+  assert.deepEqual(editor.readCodeRows(patched, app).rows, custom);
+});
+
+test('cache helpers stay safe without browser storage', () => {
+  assert.equal(editor.loadCachedRows('cw'), null);
+  assert.doesNotThrow(() => editor.saveCachedRows('cw', editor.APPS.cw.defaults));
+});
+
 test('unknown layout is refused instead of patching garbage', () => {
   const code = Buffer.from('nothing that looks like a prosign table here', 'ascii');
   const hdr = Buffer.alloc(64);

@@ -1,13 +1,15 @@
 // Prosign editor — 8K overlay fork customization.
 //
-// Edits the F+digit prosign table of our own overlay Apps (CW, SECMSG) directly in
-// the browser and installs the patched package through the existing Apps installer:
-// the table bytes are rewritten in the package image, the header code CRC-32 is
-// recomputed (the firmware verifies it), and UVStudioFlash does the rest.
+// Edits the F+digit prosign table of our overlay Apps (CW, SECMSG) directly on
+// the radio: the page reads the installed App's code from its slot, rewrites the
+// prosign bytes in place (one 4 KiB code sector + the header code CRC-32) and
+// nothing else is reflashed. A full slot erase (App reinstall/upgrade) resets the
+// table to the package defaults, so the last set is also cached in localStorage
+// and can be restored with one click.
 //
-// The editor targets the currently published packages (it locates each table by the
-// shipped default layout). Pure helpers are exported for Node tests; the browser
-// runtime is guarded and self-boots.
+// The table is located by the shipped default layout; an already-customised table
+// is found through the fixed offset of that published build. Pure helpers are
+// exported for Node tests; the browser runtime is guarded and self-boots.
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -27,27 +29,32 @@
   const HDR_SIZE = 64;           // FAP1 header size
   const CODE_CRC_OFF = 12;       // header: uint32 LE crc32 over the code image
   const APP_MAGIC = 0x31504146;  // "FAP1"
+  const CACHE_PREFIX = 'uvstudio.prosigns.';
 
-  // Where each App keeps its prosign table, and the default layout of the currently
-  // published packages (the locator anchor). `budget` for the packed table is learned
-  // from the located blob, so growing defaults in a future release is fine.
+  // Where each App keeps its prosign table in the published build. `tableAt` /
+  // `offsetsAt`+`blobAt` are the compiled offsets (fallback when the table has
+  // already been customised); `budget` is the packed table's byte capacity.
   const APPS = {
     cw: {
+      id: 'cw',
       kind: 'fixed',
       labelKey: 'prosigns_app_cw',
-      local: 'packages/CW-V16.app',
-      url: 'https://raw.githubusercontent.com/busybin/uv-k1-k5v3-firmware-f4hwn-8k/v610-8k/archive/apps/v6.1.0/CW-V16.app',
+      appName: 'CW V16',
       maxChars: 5,
       hintKey: 'prosigns_hint_fixed',
+      tableAt: 5217,
       defaults: ['', 'CQ', 'DE', 'UR', 'RST', 'R', 'TU', '73', 'AR', 'SK']
     },
     secmsg: {
+      id: 'secmsg',
       kind: 'packed',
       labelKey: 'prosigns_app_secmsg',
-      local: 'packages/SECMSG-V24.app',
-      url: 'https://raw.githubusercontent.com/busybin/uv-k1-k5v3-firmware-f4hwn-8k/v610-8k/archive/apps/v6.1.0/SECMSG-V24.app',
+      appName: 'SECMSG V24',
       maxChars: 9,
       hintKey: 'prosigns_hint_packed',
+      offsetsAt: 6656,
+      blobAt: 6666,
+      budget: 28,
       defaults: ['', 'CQ', 'DE', 'UR', 'RST', 'R', 'TU', '73', 'AR', 'SK']
     }
   };
@@ -191,14 +198,55 @@
     return rows;
   }
 
-  // ---- package patching ---------------------------------------------------
+  // ---- locating / patching a code image -----------------------------------
 
+  // Pattern-only locator (used on the shipped package image; refuses an unknown
+  // layout so a wrong .app can never be patched into garbage).
   function locate(code, app) {
     if (app.kind === 'fixed') {
       const off = findFixedTable(code, app.defaults);
       return off < 0 ? null : { kind: 'fixed', at: off, budget: 60 };
     }
     return findPackedTables(code, app.defaults);
+  }
+
+  // Radio locator: the default pattern (fresh install or after an upgrade), else
+  // the fixed offset of the published build (an already-customised table).
+  function locateInCode(code, app) {
+    const byPattern = locate(code, app);
+    if (byPattern) return byPattern;
+    if (app.kind === 'fixed') {
+      return app.tableAt != null ? { kind: 'fixed', at: app.tableAt, budget: 60 } : null;
+    }
+    return app.offsetsAt != null
+      ? { kind: 'packed', offsetsAt: app.offsetsAt, blobAt: app.blobAt, budget: app.budget }
+      : null;
+  }
+
+  const defaultAt = app => (app.kind === 'fixed'
+    ? { kind: 'fixed', at: app.tableAt, budget: 60 }
+    : { kind: 'packed', offsetsAt: app.offsetsAt, blobAt: app.blobAt, budget: app.budget });
+
+  function readCodeRows(code, app) {
+    const at = locateInCode(code, app);
+    if (!at) throw new Error('prosign table not found in this App');
+    return { at, rows: app.kind === 'fixed' ? decodeFixed(code, at.at) : decodePacked(code, at) };
+  }
+
+  // rows: array of 10 strings (index 0 ignored). Returns a new code image.
+  function patchCode(code, app, rows) {
+    const at = locateInCode(code, app);
+    if (!at) throw new Error('prosign table not found in this App');
+    const out = code.slice();
+    if (app.kind === 'fixed') {
+      out.set(encodeFixed(rows), at.at);
+    } else {
+      const packed = encodePacked(rows, at.budget);
+      out.set(packed.offsets, at.offsetsAt);
+      out.set(packed.blob, at.blobAt);
+      at.used = packed.used;
+    }
+    return { code: out, at };
   }
 
   // rows: array of 10 strings (index 0 ignored). Returns a new package image.
@@ -213,8 +261,7 @@
     const out = pkg.slice();
     const view = new DataView(out.buffer);
     if (app.kind === 'fixed') {
-      const table = encodeFixed(rows);
-      out.set(table, HDR_SIZE + at.at);
+      out.set(encodeFixed(rows), HDR_SIZE + at.at);
     } else {
       const packed = encodePacked(rows, at.budget);
       out.set(packed.offsets, HDR_SIZE + at.offsetsAt);
@@ -240,23 +287,44 @@
 
   // ===================== browser runtime =====================
 
-  let state = { app: null, pkg: null, info: null, where: '' };
+  let state = { app: null, at: null, statusKey: null, statusArgs: [] };
 
   function el(id) { return document.getElementById(id); }
 
-  async function fetchPackage(app) {
-    // local copy first (local preview / offline), then the published archive
-    for (const url of [app.local, app.url]) {
-      try {
-        const res = await fetch(url, { cache: 'no-cache' });
-        if (res.ok) return new Uint8Array(await res.arrayBuffer());
-      } catch (e) { /* try the next source */ }
-    }
-    throw new Error('package not reachable (' + app.url + ')');
+  // --- local cache: survives a reinstall/upgrade (which resets the table) ---
+  function cacheKey(id) { return CACHE_PREFIX + id; }
+
+  function saveCachedRows(id, rows) {
+    try { localStorage.setItem(cacheKey(id), JSON.stringify(rows)); } catch (e) { /* storage denied */ }
+  }
+
+  function loadCachedRows(id) {
+    try {
+      const text = localStorage.getItem(cacheKey(id));
+      if (!text) return null;
+      const rows = JSON.parse(text);
+      if (Array.isArray(rows) && rows.length === ROWS) return rows.map(r => String(r == null ? '' : r));
+    } catch (e) { /* ignore malformed cache */ }
+    return null;
+  }
+
+  function setStatus(key, ...args) {
+    state.statusKey = key;
+    state.statusArgs = args;
+    const node = el('prosignStatus');
+    if (node) node.textContent = t(key, ...args);
+  }
+
+  function setBusy(busy) {
+    ['prosignLoad', 'prosignInstall', 'prosignReset'].forEach(id => {
+      const b = el(id);
+      if (b) b.disabled = busy;
+    });
   }
 
   function renderRows(app, rows, at) {
     const body = el('prosignRows');
+    if (!body) return;
     body.textContent = '';
     for (let r = 1; r < ROWS; r++) {
       const tr = document.createElement('tr');
@@ -290,13 +358,9 @@
   function updateBudget(app, at) {
     const note = el('prosignBudget');
     if (!note) return;
-    if (app.kind === 'fixed') {
-      note.textContent = '';
-      return;
-    }
+    if (app.kind === 'fixed') { note.textContent = ''; return; }
     try {
-      const rows = currentRows(app);
-      const packed = encodePacked(rows, at.budget);
+      const packed = encodePacked(currentRows(app), at.budget);
       const remaining = at.budget - packed.used;
       const budgetState = remaining === 0
         ? t('prosigns_budget_full')
@@ -307,56 +371,93 @@
     }
   }
 
-  function renderStatus() {
-    const { app, info } = state;
-    if (!app || !info) return;
-    el('prosignHint').textContent = t(app.hintKey);
-    el('prosignStatus').textContent = t(
-      'prosigns_status_loaded',
-      info.header.name,
-      info.header.version,
-      state.where
+  function showRows(app, rows, statusKey, ...statusArgs) {
+    state.app = app;
+    state.at = defaultAt(app);
+    renderRows(app, rows, state.at);
+    const hint = el('prosignHint');
+    if (hint) hint.textContent = t(app.hintKey);
+    setStatus(statusKey, ...statusArgs);
+  }
+
+  // Prefill from the local cache (or the shipped defaults) without touching the
+  // radio, so the pane is useful straight away.
+  function preload(kind) {
+    const app = APPS[kind];
+    if (!app) return;
+    const cached = loadCachedRows(app.id);
+    showRows(
+      app,
+      cached || app.defaults,
+      cached ? 'prosigns_status_cache' : 'prosigns_status_idle',
+      t(app.labelKey)
     );
   }
 
-  async function loadPackage(kind) {
+  async function readFromRadio(kind) {
     const app = APPS[kind];
     if (!app) return;
-    const status = el('prosignStatus');
-    status.textContent = t('prosigns_status_loading', t(app.labelKey));
+    const slot = parseInt(el('prosignSlot').value, 10);
+    setBusy(true);
+    setStatus('prosigns_status_loading', t(app.labelKey));
     try {
-      const pkg = await fetchPackage(app);
-      const info = readRows(pkg, app);
-      const where = app.kind === 'fixed'
-        ? `code offset ${info.at.at}`
-        : `code offset ${info.at.offsetsAt}`;
-      state = { app, pkg, info, where };
+      if (!window.UVStudioFlash || !window.UVStudioFlash.prosignReadApp) {
+        throw new Error('flasher entry point unavailable');
+      }
+      const res = await window.UVStudioFlash.prosignReadApp(slot);
+      if (!res) { setStatus('prosigns_status_idle', t(app.labelKey)); return; }
+      if (res.name !== app.appName) {
+        throw new Error(t('prosigns_wrong_app', slot + 1, res.name, app.appName));
+      }
+      const info = readCodeRows(res.code, app);
+      state.app = app;
+      state.at = info.at;
       renderRows(app, info.rows, info.at);
-      renderStatus();
-      el('prosignInstall').disabled = false;
-      el('prosignReset').disabled = false;
+      const hint = el('prosignHint');
+      if (hint) hint.textContent = t(app.hintKey);
+      saveCachedRows(app.id, info.rows);       // the radio's current set is the cache
+      setStatus('prosigns_status_read', res.name, res.version, slot + 1);
     } catch (e) {
-      status.textContent = t('prosigns_load_failed', e.message);
-      el('prosignInstall').disabled = true;
+      setStatus('prosigns_load_failed', e.message);
+    } finally {
+      setBusy(false);
     }
   }
 
-  function installPackage() {
-    if (!state.app) return;
+  async function writeProsigns(kind) {
+    const app = APPS[kind];
+    if (!app) return;
+    const slot = parseInt(el('prosignSlot').value, 10);
+    setBusy(true);
+    setStatus('prosigns_status_writing', t(app.labelKey));
     try {
-      const rows = currentRows(state.app);
-      const { pkg } = patchPackage(state.pkg, state.app, rows);
-      const slot = parseInt(el('prosignSlot').value, 10);
-      const name = state.app.kind === 'fixed' ? 'CW-V16.app (custom prosigns)' : 'SECMSG-V24.app (custom prosigns)';
-      if (!window.UVStudioFlash || !window.UVStudioFlash.setAppImageBytes) {
-        throw new Error('installer entry point unavailable');
+      if (!window.UVStudioFlash || !window.UVStudioFlash.prosignWriteApp) {
+        throw new Error('flasher entry point unavailable');
       }
-      window.UVStudioFlash.setAppImageBytes(pkg, name);
-      window.UVStudioFlash.installAppToSlot(slot);
-      el('prosignStatus').textContent = t('prosigns_install_done', slot + 1);
+      const rows = currentRows(app);
+      const res = await window.UVStudioFlash.prosignReadApp(slot);
+      if (!res) { setStatus('prosigns_status_idle', t(app.labelKey)); return; }
+      if (res.name !== app.appName) {
+        throw new Error(t('prosigns_wrong_app', slot + 1, res.name, app.appName));
+      }
+      const patched = patchCode(res.code, app, rows);
+      const ok = await window.UVStudioFlash.prosignWriteApp(slot, patched.code);
+      if (!ok) { setStatus('prosigns_status_idle', t(app.labelKey)); return; }
+      state.app = app;
+      state.at = defaultAt(app);
+      saveCachedRows(app.id, rows);
+      setStatus('prosigns_write_done', slot + 1);
     } catch (e) {
-      el('prosignStatus').textContent = t('prosigns_install_failed', e.message);
+      setStatus('prosigns_install_failed', e.message);
+    } finally {
+      setBusy(false);
     }
+  }
+
+  function resetToDefaults(kind) {
+    const app = APPS[kind];
+    if (!app) return;
+    showRows(app, app.defaults.slice(), 'prosigns_status_idle', t(app.labelKey));
   }
 
   function boot() {
@@ -371,18 +472,19 @@
         slot.appendChild(o);
       }
     }
-    select.addEventListener('change', () => { void loadPackage(select.value); });
-    el('prosignLoad').addEventListener('click', () => { void loadPackage(select.value); });
-    el('prosignInstall').addEventListener('click', installPackage);
-    el('prosignReset').addEventListener('click', () => { void loadPackage(select.value); });
+    select.addEventListener('change', () => preload(select.value));
+    el('prosignLoad').addEventListener('click', () => { void readFromRadio(select.value); });
+    el('prosignInstall').addEventListener('click', () => { void writeProsigns(select.value); });
+    el('prosignReset').addEventListener('click', () => resetToDefaults(select.value));
     // Re-render the translated strings when the language changes.
     window.addEventListener('uvstudio:languagechange', () => {
-      if (state.info) {
-        renderStatus();
-        updateBudget(state.app, state.info.at);
-      }
+      if (!state.app) return;
+      const hint = el('prosignHint');
+      if (hint) hint.textContent = t(state.app.hintKey);
+      if (state.statusKey) setStatus(state.statusKey, ...state.statusArgs);
+      updateBudget(state.app, state.at || defaultAt(state.app));
     });
-    void loadPackage(select.value);
+    preload(select.value);
   }
 
   return {
@@ -396,8 +498,14 @@
     findPackedTables,
     decodePacked,
     locate,
+    locateInCode,
+    defaultAt,
+    readCodeRows,
+    patchCode,
     readRows,
     patchPackage,
+    loadCachedRows,
+    saveCachedRows,
     APPS
   };
 });
