@@ -467,5 +467,8 @@ window.UVSTUDIO_LOCALES.pl = {
   "prosigns_write_done": "Prosigny zapisane w slocie {0} — bez reinstalacji.",
   "prosigns_wrong_app": "Slot {0} zawiera „{1}”, a nie {2}.",
   "prosigns_slot_empty": "Ten slot nie zawiera prawidłowej aplikacji.",
-  "prosigns_crc_mismatch": "Niezgodność CRC-32 kodu — ten slot nie jest jedną z naszych opublikowanych kompilacji."
+  "prosigns_crc_mismatch": "Niezgodność CRC-32 kodu — ten slot nie jest jedną z naszych opublikowanych kompilacji.",
+  "prosigns_status_scanning": "Skanowanie slotów w poszukiwaniu {0} …",
+  "prosigns_scan_failed": "Nie udało się przeskanować slotów aplikacji.",
+  "prosigns_app_not_found": "Nie znaleziono aplikacji {0} w żadnym slocie — zainstaluj ją najpierw na karcie Apps."
 };

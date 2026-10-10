@@ -59,6 +59,17 @@
     }
   };
 
+  // Recognise an App by the leading family token of its FAP1 name, so any future
+  // version ("CW V17", "SECMSG V25", …) is matched without hard-coding a version.
+  const APP_MATCH = {
+    cw: /^CW(\s|$)/i,
+    secmsg: /^SECMSG(\s|$)/i
+  };
+
+  function matchApp(name, app) {
+    return APP_MATCH[app.id].test(String(name == null ? '' : name).trim());
+  }
+
   // Shared translation runtime (studio-i18n.js exposes window.uvStudioI18n).
   function t(key, ...values) {
     return window.uvStudioI18n ? window.uvStudioI18n.t(key, ...values) : key;
@@ -394,21 +405,28 @@
     );
   }
 
+  // Scan every App slot and return the slot holding this App (any version).
+  async function resolveSlot(app) {
+    if (!window.UVStudioFlash || !window.UVStudioFlash.prosignScanApps) {
+      throw new Error('flasher entry point unavailable');
+    }
+    const apps = await window.UVStudioFlash.prosignScanApps();
+    if (!apps) throw new Error(t('prosigns_scan_failed'));
+    const hit = apps.find(a => matchApp(a.name, app));
+    if (!hit) throw new Error(t('prosigns_app_not_found', t(app.labelKey)));
+    return hit.slot;
+  }
+
   async function readFromRadio(kind) {
     const app = APPS[kind];
     if (!app) return;
-    const slot = parseInt(el('prosignSlot').value, 10);
     setBusy(true);
-    setStatus('prosigns_status_loading', t(app.labelKey));
+    setStatus('prosigns_status_scanning', t(app.labelKey));
     try {
-      if (!window.UVStudioFlash || !window.UVStudioFlash.prosignReadApp) {
-        throw new Error('flasher entry point unavailable');
-      }
+      const slot = await resolveSlot(app);
+      setStatus('prosigns_status_loading', t(app.labelKey));
       const res = await window.UVStudioFlash.prosignReadApp(slot);
       if (!res) { setStatus('prosigns_status_idle', t(app.labelKey)); return; }
-      if (res.name !== app.appName) {
-        throw new Error(t('prosigns_wrong_app', slot + 1, res.name, app.appName));
-      }
       const info = readCodeRows(res.code, app);
       state.app = app;
       state.at = info.at;
@@ -427,19 +445,14 @@
   async function writeProsigns(kind) {
     const app = APPS[kind];
     if (!app) return;
-    const slot = parseInt(el('prosignSlot').value, 10);
     setBusy(true);
-    setStatus('prosigns_status_writing', t(app.labelKey));
+    setStatus('prosigns_status_scanning', t(app.labelKey));
     try {
-      if (!window.UVStudioFlash || !window.UVStudioFlash.prosignWriteApp) {
-        throw new Error('flasher entry point unavailable');
-      }
+      const slot = await resolveSlot(app);
+      setStatus('prosigns_status_writing', t(app.labelKey));
       const rows = currentRows(app);
       const res = await window.UVStudioFlash.prosignReadApp(slot);
       if (!res) { setStatus('prosigns_status_idle', t(app.labelKey)); return; }
-      if (res.name !== app.appName) {
-        throw new Error(t('prosigns_wrong_app', slot + 1, res.name, app.appName));
-      }
       const patched = patchCode(res.code, app, rows);
       const ok = await window.UVStudioFlash.prosignWriteApp(slot, patched.code);
       if (!ok) { setStatus('prosigns_status_idle', t(app.labelKey)); return; }
@@ -463,15 +476,6 @@
   function boot() {
     const select = el('prosignApp');
     if (!select) return;
-    const slot = el('prosignSlot');
-    if (slot && !slot.options.length) {
-      for (let s = 0; s < 16; s++) {
-        const o = document.createElement('option');
-        o.value = String(s);
-        o.textContent = String(s + 1);
-        slot.appendChild(o);
-      }
-    }
     select.addEventListener('change', () => preload(select.value));
     el('prosignLoad').addEventListener('click', () => { void readFromRadio(select.value); });
     el('prosignInstall').addEventListener('click', () => { void writeProsigns(select.value); });
@@ -500,6 +504,7 @@
     locate,
     locateInCode,
     defaultAt,
+    matchApp,
     readCodeRows,
     patchCode,
     readRows,

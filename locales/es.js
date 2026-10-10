@@ -467,5 +467,8 @@ window.UVSTUDIO_LOCALES.es = {
   "prosigns_write_done": "Prosignos escritos en la ranura {0} — sin reinstalación.",
   "prosigns_wrong_app": "La ranura {0} contiene \"{1}\", no {2}.",
   "prosigns_slot_empty": "Esa ranura no contiene una App válida.",
-  "prosigns_crc_mismatch": "El CRC-32 del código no coincide — esa ranura no es una de nuestras versiones publicadas."
+  "prosigns_crc_mismatch": "El CRC-32 del código no coincide — esa ranura no es una de nuestras versiones publicadas.",
+  "prosigns_status_scanning": "Buscando {0} en las ranuras …",
+  "prosigns_scan_failed": "No se pudieron explorar las ranuras de Apps.",
+  "prosigns_app_not_found": "No se encontró ninguna App {0} en las ranuras — instálala primero desde la pestaña Apps."
 };

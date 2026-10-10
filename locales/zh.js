@@ -467,5 +467,8 @@ window.UVSTUDIO_LOCALES.zh = {
   "prosigns_write_done": "prosign 已写入槽位 {0} —— 无需重装。",
   "prosigns_wrong_app": "槽位 {0} 装的是“{1}”，不是 {2}。",
   "prosigns_slot_empty": "该槽位没有有效的 App。",
-  "prosigns_crc_mismatch": "代码 CRC-32 不匹配 —— 该槽位不是我们发布的构建。"
+  "prosigns_crc_mismatch": "代码 CRC-32 不匹配 —— 该槽位不是我们发布的构建。",
+  "prosigns_status_scanning": "正在扫描槽位查找 {0} …",
+  "prosigns_scan_failed": "无法扫描 App 槽位。",
+  "prosigns_app_not_found": "所有槽位都没找到 {0} —— 请先在 Apps 页安装它。"
 };

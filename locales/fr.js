@@ -467,5 +467,8 @@ window.UVSTUDIO_LOCALES.fr = {
   "prosigns_write_done": "Prosignes écrits dans le slot {0} — aucune réinstallation nécessaire.",
   "prosigns_wrong_app": "Le slot {0} contient « {1} », pas {2}.",
   "prosigns_slot_empty": "Ce slot ne contient pas d'App valide.",
-  "prosigns_crc_mismatch": "CRC-32 du code non concordant — ce slot n'est pas une de nos versions publiées."
+  "prosigns_crc_mismatch": "CRC-32 du code non concordant — ce slot n'est pas une de nos versions publiées.",
+  "prosigns_status_scanning": "Recherche de {0} dans les slots …",
+  "prosigns_scan_failed": "Impossible de parcourir les slots d'App.",
+  "prosigns_app_not_found": "Aucune App {0} trouvée dans les slots — installez-la d'abord depuis l'onglet Apps."
 };

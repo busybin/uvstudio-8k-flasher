@@ -467,5 +467,8 @@ window.UVSTUDIO_LOCALES.nl = {
   "prosigns_write_done": "Prosigns geschreven naar slot {0} — geen herinstallatie nodig.",
   "prosigns_wrong_app": "Slot {0} bevat \"{1}\", niet {2}.",
   "prosigns_slot_empty": "Dat slot bevat geen geldige app.",
-  "prosigns_crc_mismatch": "Code-CRC-32 komt niet overeen — dat slot is geen van onze gepubliceerde builds."
+  "prosigns_crc_mismatch": "Code-CRC-32 komt niet overeen — dat slot is geen van onze gepubliceerde builds.",
+  "prosigns_status_scanning": "App-slots doorzoeken op {0} …",
+  "prosigns_scan_failed": "Kon de app-slots niet doorzoeken.",
+  "prosigns_app_not_found": "Geen {0}-app gevonden in de slots — installeer deze eerst via het tabblad Apps."
 };

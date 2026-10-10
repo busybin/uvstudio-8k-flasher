@@ -608,6 +608,7 @@ window.UVStudioFlash = Object.freeze({
     return appInstallFlow();
   },
   // 8K fork: edit the prosigns of an installed App in place (no reinstall).
+  prosignScanApps: () => prosignScanApps(),
   prosignReadApp: (slot) => prosignReadApp(slot),
   prosignWriteApp: (slot, codeBytes) => prosignWriteApp(slot, codeBytes)
 });
@@ -3403,6 +3404,32 @@ async function prosignWriteApp(slot, codeBytes) {
       throw new Error(t('flashRestoreError', flashAddress(hdrBase)));
     }
     return true;
+  } finally {
+    endToolsOperation(op);
+  }
+}
+
+// Scan every App slot and return the valid ones (for auto-detecting an App).
+async function prosignScanApps() {
+  const op = beginToolsOperation('prosigns-scan', true);
+  if (!op) return null;
+  try {
+    if (!port) await connect();
+    readBuffer = []; await sleep(500);
+    const dev = await requestDeviceInfo();
+    if (!(await appsProbe(dev))) return null;
+    const found = [];
+    for (let s = 0; s < APP_SLOT_COUNT; s++) {
+      try {
+        const info = await appInfo(s);
+        if (info.status === 0 && info.hdr && info.hdr.codeSize > 0) {
+          found.push({ slot: s, name: info.hdr.name, version: info.hdr.version, codeSize: info.hdr.codeSize });
+        }
+      } catch (e) {
+        if (e?.code === 'UVSTUDIO_SERIAL_SESSION_CHANGED' || !port) throw e;
+      }
+    }
+    return found;
   } finally {
     endToolsOperation(op);
   }

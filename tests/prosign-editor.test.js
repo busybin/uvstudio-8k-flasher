@@ -130,6 +130,18 @@ test('radio path: a customised packed table is found via the build offset', () =
   assert.deepEqual(editor.readCodeRows(patched, app).rows, custom);
 });
 
+test('recognises any future App version by name prefix', () => {
+  assert.ok(editor.matchApp('CW V16', editor.APPS.cw));
+  assert.ok(editor.matchApp('CW V17', editor.APPS.cw));
+  assert.ok(editor.matchApp('CW', editor.APPS.cw));
+  assert.ok(editor.matchApp('SECMSG V24', editor.APPS.secmsg));
+  assert.ok(editor.matchApp('SECMSG V25', editor.APPS.secmsg));
+  assert.ok(!editor.matchApp('SECMSG V24', editor.APPS.cw));
+  assert.ok(!editor.matchApp('CW V16', editor.APPS.secmsg));
+  assert.ok(!editor.matchApp('BroadcastFM', editor.APPS.cw));
+  assert.ok(!editor.matchApp('', editor.APPS.cw));
+});
+
 test('cache helpers stay safe without browser storage', () => {
   assert.equal(editor.loadCachedRows('cw'), null);
   assert.doesNotThrow(() => editor.saveCachedRows('cw', editor.APPS.cw.defaults));

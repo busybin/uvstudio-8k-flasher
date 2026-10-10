@@ -467,5 +467,8 @@ window.UVSTUDIO_LOCALES.en = {
   "prosigns_write_done": "Prosigns written to slot {0} — no reinstall needed.",
   "prosigns_wrong_app": "Slot {0} holds \"{1}\", not {2}.",
   "prosigns_slot_empty": "That slot does not hold a valid App.",
-  "prosigns_crc_mismatch": "Code CRC-32 mismatch — that slot is not one of our published builds."
+  "prosigns_crc_mismatch": "Code CRC-32 mismatch — that slot is not one of our published builds.",
+  "prosigns_status_scanning": "Scanning App slots for {0} …",
+  "prosigns_scan_failed": "Could not scan the App slots.",
+  "prosigns_app_not_found": "No {0} App found in any slot — install it from the Apps tab first."
 };
