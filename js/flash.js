@@ -3186,7 +3186,15 @@ function appCompareVersions(current, available) {
   return a.suffix.localeCompare(b.suffix, undefined, { numeric: true });
 }
 
-function appCatalogKey(name) { return String(name || '').trim().toLowerCase(); }
+function appCatalogKey(name) {
+  // Installed and catalog entries are matched across version bumps: an App's name
+  // carries its version ("CW V16" / "APRS RX v0.9"), so key on the version-less
+  // family name and compare the version fields separately.
+  return String(name || '')
+    .replace(/\s+v\d+(?:\.\d+)*\s*$/i, '')
+    .trim()
+    .toLowerCase();
+}
 
 function appFirmwareVersionFromName(name) {
   const version = String(name || '').match(/\bv?(\d+(?:\.\d+){1,2})\b/i)?.[1];

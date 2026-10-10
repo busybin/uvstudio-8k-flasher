@@ -7,6 +7,9 @@
 >
 > **Live page: <https://busybin.github.io/uvstudio-8k-flasher/>**
 
+![8K overlay flasher — Apps tab](screenshots/flasher-apps.png)
+![Prosigns editor](screenshots/flasher-prosigns.png)
+
 ## What this fork changes
 
 | # | Change | Why |
