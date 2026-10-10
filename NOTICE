@@ -24,7 +24,9 @@ moved to the repository root, and applies the following modifications:
   2. The firmware catalog and the overlay-App catalog are repointed at
      busybin/uv-k1-k5v3-firmware-f4hwn-8k (branch v610-8k), so both
      dropdowns offer our own builds and Apps.
-  3. A banner in the Apps tab states the 8K firmware requirement.
+  3. A banner in the Apps tab states the 8K firmware requirement, our own Apps
+     are marked with a star in the App picker, and the About page describes
+     this fork with links to the companion repositories.
   4. .nojekyll was added and GitHub Pages serves the repository root.
 
 All other content is unmodified upstream work.

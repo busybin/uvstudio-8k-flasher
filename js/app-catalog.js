@@ -63,12 +63,17 @@
       .replace(/([a-z])([A-Z])/g, '$1 $2');
   }
 
+  // 8K fork: our own overlay Apps are highlighted in the picker (the star is part
+  // of the option text because per-option styling is unreliable across browsers).
+  const OURS = ['cw-v16.app', 'secmsg-v24.app'];
+
   function listApps(items) {
     return (Array.isArray(items) ? items : [])
       .filter(item => item && item.type === 'file' && /\.app$/i.test(item.name) && item.download_url)
       .map(item => ({
         name: item.name,
         label: displayAppName(item.name),
+        ours: OURS.includes(String(item.name).toLowerCase()),
         size: item.size,
         url: item.download_url
       }))
@@ -76,8 +81,9 @@
   }
 
   function formatAppLabel(app) {
-    if (!Number.isFinite(app.size)) return app.label;
-    return `${app.label} · ${(app.size / 1024).toFixed(1)} KB`;
+    const marked = app && app.ours ? '\u2605 ' : '';
+    if (!Number.isFinite(app.size)) return marked + app.label;
+    return `${marked}${app.label} · ${(app.size / 1024).toFixed(1)} KB`;
   }
 
   function parseAppHeader(buffer) {
@@ -217,6 +223,7 @@
         option.value = app.url;
         option.dataset.appName = app.name;
         option.textContent = formatAppLabel(app);
+        if (app.ours) option.title = 'Our own App (8K fork)';
         appSelect.appendChild(option);
       });
       appSelect.disabled = apps.length === 0;
