@@ -79,7 +79,7 @@ test('takes the rolling build only from the development branch response', () => 
 
 test('loads the rolling development build from the development branch', () => {
   const source = fs.readFileSync(require.resolve('../js/flash-catalog.js'), 'utf8');
-  assert.match(source, /const DEVELOPMENT_BRANCH = 'v610-8k';/);
+  assert.match(source, /const DEVELOPMENT_BRANCH = 'v620-8k';/);
   assert.doesNotMatch(source, /armel\/uv-k1-k5v3-firmware-custom/);
 });
 

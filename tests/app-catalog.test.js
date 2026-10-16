@@ -28,25 +28,119 @@ test('lists app files alphabetically and ignores unrelated archive entries', () 
   ]);
 
   assert.deepEqual(apps.map(app => app.label), ['Beacon', 'Fox Hunt']);
-  assert.equal(catalog.formatAppLabel(apps[0]), 'Beacon · 1.0 KB');
+  // The listing size counts header + code + assets: no size until the header is parsed.
+  assert.equal(catalog.formatAppLabel(apps[0]), 'Beacon');
+  assert.equal(catalog.formatAppLabel(apps[0], { codeSize: 3584, assetSize: 384 }), 'Beacon · 3.5 KB');
+});
+
+test('adds presentation metadata without changing the app binary format', () => {
+  assert.deepEqual(catalog.appDetails('CWDecode.app'), {
+    id: 'cwdecode',
+    category: 'radio',
+    description: 'Decode Morse code in real time.',
+    author: 'armel',
+    descriptionFr: 'Décodage du Morse en temps réel.',
+    label: 'CW Decode'
+  });
+  assert.equal(catalog.appDetails('Tetris.app').category, 'games');
+  assert.equal(catalog.appDetails('Spectrum3D.app').category, 'radio');
+  assert.equal(catalog.appDetails('FoxHunt.app').category, 'radio');
+  assert.equal(catalog.appDetails('EPIRB406.app').category, 'radio');
+  assert.equal(catalog.appDetails('SigFinder.app').category, 'radio');
+  assert.equal(catalog.appDetails('FutureApp.app').category, 'other');
+  assert.equal(catalog.appDetails('FutureApp.app').author, '');
+  assert.equal(catalog.appDetails('Snake.app').author, 'mrkusypl');
+  assert.equal(catalog.appDetails('Minesweeper.app').author, 'Sarijen');
+  assert.equal(catalog.appDetails('EPIRB406.app').author, 'jdenoy');
+  assert.equal(catalog.appDetails('SigFinder.app').author, 'jdenoy');
+  assert.deepEqual(catalog.appDetails('ToneCall.app'), {
+    id: 'tonecall',
+    category: 'radio',
+    description: 'Send configurable ZVEI or CCIR selective calling tone sequences.',
+    author: 'jdenoy',
+    descriptionFr: 'Émission de séquences d’appel sélectif ZVEI ou CCIR configurables.',
+    label: 'ToneCall'
+  });
+  assert.equal(catalog.appDetails('ACARSRX.app').author, 'armel');
+  assert.deepEqual(catalog.appDetails('FlashMap.app'), {
+    id: 'flashmap',
+    category: 'tools',
+    description: 'Browse the external flash map: firmware slots, apps, active state and a hex viewer.',
+    author: 'armel',
+    descriptionFr: 'Carte de la flash externe : slots firmware, apps, état actif et visualiseur hexadécimal.',
+    label: 'Flash Map'
+  });
+  assert.equal(catalog.appDetails('APRSDIGI.app').label, 'APRS DIGI');
+  assert.equal(catalog.appCatalogId('Spectrum-3D.app'), 'spectrum3d');
 });
 
 test('targets the stable versioned apps archive on GitHub', () => {
   assert.equal(
     catalog.contentsURL('archive/apps/v6.0.0'),
-    'https://api.github.com/repos/busybin/uv-k1-k5v3-firmware-f4hwn-8k/contents/archive/apps/v6.0.0?ref=v610-8k'
+    'https://api.github.com/repos/busybin/uv-k1-k5v3-firmware-f4hwn-8k/contents/archive/apps/v6.0.0?ref=v620-8k'
   );
+});
+
+test('keeps the current app catalog available when the GitHub API is unavailable', () => {
+  const apps = catalog.fallbackApps();
+  assert.equal(apps.length, 32);
+  assert.equal(apps[0].label, 'ACARS RX');
+  assert.match(apps[0].url, /raw\.githubusercontent\.com\/.*\/v6\.2\.0\/ACARSRX\.app$/);
+  assert.deepEqual(catalog.fallbackApps({ version: '6.0.0', path: 'archive/apps/v6.0.0' }), []);
 });
 
 test('reads the app identity and version from a FAP1 header', () => {
   const header = Buffer.alloc(64);
   header.writeUInt32LE(0x31504146, 0);
+  header.writeUInt32LE(3584, 8);
   header.write('Beacon', 20, 'ascii');
   header.write('1.4.2', 36, 'ascii');
+  header.writeUInt16LE(384, 60);
 
   assert.deepEqual(catalog.parseAppHeader(header), {
     name: 'Beacon',
-    version: '1.4.2'
+    version: '1.4.2',
+    codeSize: 3584,
+    assetSize: 384
   });
   assert.equal(catalog.parseAppHeader(Buffer.alloc(64)), null);
+});
+
+test('formats catalog asset sizes without rounding small assets to zero', () => {
+  assert.equal(catalog.formatByteSize(240), '240 B');
+  assert.equal(catalog.formatByteSize(1536), '1.5 KB');
+});
+
+test('derives catalog actions from the installed and available versions', () => {
+  assert.equal(catalog.catalogAppState(null, { version: '1.2.0' }), 'install');
+  assert.equal(
+    catalog.catalogAppState({ version: '1.1.0' }, { version: '1.2.0' }),
+    'update'
+  );
+  assert.equal(
+    catalog.catalogAppState({ version: '1.2.0' }, { version: '1.2.0' }),
+    'current'
+  );
+  assert.equal(
+    catalog.catalogAppState({ version: '1.3.0' }, { version: '1.2.0' }),
+    'current'
+  );
+});
+
+test('compares app versions numerically and treats a release as newer than its prerelease', () => {
+  assert.equal(catalog.compareAppVersions('0.9', '0.10'), -1);
+  assert.equal(catalog.compareAppVersions('1.0-rc1', '1.0'), -1);
+  assert.equal(catalog.compareAppVersions('1.0', '1.0.0'), 0);
+});
+
+test('provides dedicated SVG pictograms for every catalog app and keeps a monogram fallback', () => {
+  [
+    'acarsrx', 'aprsdigi', 'aprsedit', 'aprsrx', 'aprstx', 'atisrx', 'beacon', 'beam', 'breakout', 'broadcastfm',
+    'cwdecode', 'cwkeyer', 'cube3d', 'epirb406', 'flashmap', 'foxhunt', 'minesweeper',
+    'plasma', 'pocsagrx', 'rapidroll', 'sigfinder', 'snake', 'sokoban', 'sondem20', 'spaceimpact',
+    'spectrum3d', 'sstv', 'systeminfo', 'tetris', 'tonecall'
+  ].forEach(id => {
+    assert.match(catalog.appIconSVG(id), /<(?:path|circle)/);
+  });
+  assert.equal(catalog.appIconSVG('futureapp'), '');
 });

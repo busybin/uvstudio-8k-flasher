@@ -21,13 +21,16 @@
   // 8K fork: our own firmware repository holds archive/f4hwn.labs.8k.v<ver>.bin.
   const REPO = 'busybin/uv-k1-k5v3-firmware-f4hwn-8k';
   const ARCHIVE_PATH = 'archive';
-  const STABLE_BRANCH = 'v610-8k';
+  // No rolling development build in this fork: the stable branch only (the
+  // development filename does not exist there, so no development entry appears).
+  const STABLE_BRANCH = (typeof globalThis !== 'undefined' && globalThis.UVStudioPreferences &&
+    typeof globalThis.UVStudioPreferences.catalogBranch === 'function')
+    ? globalThis.UVStudioPreferences.catalogBranch()
+    : 'v620-8k';
   const API_URL =
     `https://api.github.com/repos/${REPO}/contents/${ARCHIVE_PATH}` +
     `?ref=${encodeURIComponent(STABLE_BRANCH)}`;
-  // No rolling development build in this fork: same branch as stable (the dev
-  // filename does not exist there, so no development entry is offered).
-  const DEVELOPMENT_BRANCH = 'v610-8k';
+  const DEVELOPMENT_BRANCH = 'v620-8k';
   const DEVELOPMENT_FILENAME = 'f4hwn.fusion.development.bin';
   const DEVELOPMENT_API_URL =
     `https://api.github.com/repos/${REPO}/contents/${ARCHIVE_PATH}/${DEVELOPMENT_FILENAME}` +
@@ -46,7 +49,7 @@
     fusion: 'F4HWN Fusion (stable)',
     fieldops: 'F4HWN FieldOps',
     transfer: 'F4HWN Transfer',
-    labs: 'F4HWN Labs',
+    labs: 'F4HWN Labs (8K fork)',
     development: 'F4HWN Fusion (dev, unstable)',
     fusion_k1: 'F4HWN Fusion · K1',
     fusion_k5v3: 'F4HWN Fusion · K5v3',

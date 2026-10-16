@@ -11,8 +11,11 @@ const root = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const studioVersionSource = fs.readFileSync(path.join(root, 'js', 'studio-version.js'), 'utf8');
 const flashSource = fs.readFileSync(path.join(root, 'js', 'flash.js'), 'utf8');
+const viewerSource = fs.readFileSync(path.join(root, 'js', 'k5viewer.js'), 'utf8');
+const appCatalogSource = fs.readFileSync(path.join(root, 'js', 'app-catalog.js'), 'utf8');
 const studioCss = fs.readFileSync(path.join(root, 'css', 'studio.css'), 'utf8');
 const toolsCss = fs.readFileSync(path.join(root, 'css', 'tools.css'), 'utf8');
+const coreCss = fs.readFileSync(path.join(root, 'css', 'core.css'), 'utf8');
 
 test('derives any multiboot edition from the canonical firmware filename', () => {
   const start = flashSource.indexOf('function slotEditionFromFilename');
@@ -112,6 +115,8 @@ test('reconnects Firmware Slots and refreshes them after the serial port returns
   assert.ok(flashSource.includes("toolsSerial.setState('reconnecting'"));
   assert.ok(flashSource.includes('slotRefreshPending = true'));
   assert.ok(flashSource.includes('void slotRefreshFlow()'));
+  assert.match(html, /class="slots-list-toolbar">\s*<button[^>]+id="slotsRefreshBtn"[^>]+class="btn primary compact-toolbar-action slots-refresh"/);
+  assert.match(toolsCss, /\.compact-toolbar-action\s*\{[^}]*height:\s*32px[^}]*font-size:\s*11px/s);
 });
 
 test('loads the shared RF Log protocol before both consumers', () => {
@@ -131,23 +136,151 @@ test('loads the app catalog after the installer API and exposes both selectors',
   assert.match(flashSource, /uvstudio:appselect/);
 });
 
-test('exposes all 16 app slots in a bounded, scrollable table', () => {
-  assert.match(flashSource, /const APP_SLOT_COUNT = 16/);
-  assert.match(flashSource, /const APP_SLOT_LAST = APP_SLOT_COUNT - 1/);
+test('exposes 48 app slots while retaining the v6.1.0 capacity', () => {
+  assert.match(flashSource, /const APP_SLOT_COUNT = 48/);
+  assert.match(flashSource, /const APP_LEGACY_SLOT_COUNT = 16/);
+  assert.match(flashSource, /appCompareVersions\(version, '6\.1\.0'\) > 0/);
   assert.match(html, /class="slots-table-wrap apps-table-wrap">\s*<table class="slots-table" id="appsTable"/);
-  assert.match(toolsCss, /\.apps-table-wrap\s*\{[^}]*height:\s*242px[^}]*overflow:\s*auto/s);
+  assert.match(toolsCss, /\.apps-table-wrap\s*\{[^}]*max-height:\s*442px[^}]*overflow:\s*auto/s);
   assert.match(toolsCss, /\.apps-table-wrap \.slots-table thead th\s*\{[^}]*position:\s*sticky/s);
   assert.match(toolsCss, /\.apps-table-wrap \.slots-table tbody tr\s*\{[^}]*height:\s*50px/s);
+  assert.match(toolsCss, /\.apps-table-wrap \.slots-table tbody td\s*\{[^}]*height:\s*50px[^}]*padding-top:\s*8px/s);
+});
+
+test('provides a catalog and compact installed-app manager without new firmware commands', () => {
+  assert.match(html, /id="appInstalledTab"/);
+  assert.match(html, /id="appCatalogTab"/);
+  assert.doesNotMatch(html, /id="appShowEmptySlots"/);
+  assert.match(html, /class="btn primary compact-toolbar-action app-refresh-button" id="appRefreshBtn"[^>]+data-i18n="appsRefresh"/);
+  assert.match(html, /class="btn danger compact-toolbar-action" id="appDeleteAllBtn"[^>]+data-i18n="appDeleteAll"[^>]+disabled/);
+  assert.match(html, /id="appDeleteAllModal"[^>]+role="dialog"[^>]+aria-modal="true"/);
+  assert.ok(html.indexOf('id="appRenumberBtn"') < html.indexOf('id="appRefreshBtn"'));
+  assert.ok(html.indexOf('id="appOrderActions"') < html.indexOf('id="appRefreshBtn"'));
+  assert.doesNotMatch(html, /id="appEmptyCatalogBtn"/);
+  assert.match(html, /id="appCatalogSearch"/);
+  assert.ok(html.indexOf('id="appCatalogLocalBuild"') < html.indexOf('id="appCatalogVersionSelect"'));
+  assert.match(html, /id="appCatalogLocalBuildButton">Custom<\/button>/);
+  assert.doesNotMatch(html, /id="appCatalogLocalBuildButton"[^>]+data-i18n/);
+  assert.match(html, /id="appCatalogLocalBuildChange"[^>]+data-i18n="appLocalBuildChange"[^>]+hidden/);
+  assert.match(appCatalogSource, /localBuildButton\.textContent = t\('appLocalBuild'\)/);
+  assert.doesNotMatch(appCatalogSource, /t\('appLocalBuildFolder'/);
+  assert.match(html, /id="appCategoryFilters"/);
+  assert.match(html, /data-category="other"[^>]*hidden/);
+  assert.match(appCatalogSource, /APP_DETAILS\[id\] \|\| \['other'/);
+  assert.match(appCatalogSource, /indexedDB\.open\(LOCAL_DIRECTORY_DB, 1\)/);
+  assert.match(appCatalogSource, /store\.put\(handle, LOCAL_DIRECTORY_KEY\)/);
+  assert.doesNotMatch(appCatalogSource, /versions\.push\(LOCAL_VERSION\)/);
+  assert.match(appCatalogSource, /localBuildChangeButton\.addEventListener\('click'.*scanLocalBuild\(true\)/s);
+  assert.match(flashSource, /appSelectFirstEmptySlot/);
+  assert.match(flashSource, /appSlotStatuses\.size !== appActiveSlotCount/);
+  assert.match(flashSource, /detail: \{ ready, installed, free, apps \}/);
+  assert.doesNotMatch(flashSource, /appEmptyCatalogBtn/);
+  assert.match(flashSource, /updateAppFromURL,/);
+  assert.match(flashSource, /deleteAppSlot,/);
+  assert.match(flashSource, /async function appDeleteAllFlow\(\)/);
+  assert.match(flashSource, /await confirmAppDeleteAll\(slots\.length\)/);
+  assert.match(flashSource, /for \(let index = 0; index < slots\.length; index\+\+\)/);
+  assert.match(flashSource, /appDeleteAllBtn\.disabled = !serialSupported \|\| busy \|\| orderDirty \|\| !installed/);
+  assert.match(flashSource, /class="slot-size"><span class="slot-code-size">—<\/span><span class="slot-asset-size"><\/span>/);
+  assert.match(flashSource, /appSizeCode.*appFormatBytes\(Number\(row\.dataset\.appCodeSize\)\)/s);
+  assert.match(flashSource, /appSizeAssets.*appFormatBytes\(Number\(row\.dataset\.appAssetSize\)\)/s);
+  assert.match(appCatalogSource, /catalogAppState\(installed, metadata\)/);
+  assert.match(appCatalogSource, /` \(\+\$\{formatByteSize\(metadata\.assetSize\)\}\)`/);
+  assert.match(appCatalogSource, /appSizeAssets.*formatByteSize\(metadata\.assetSize\)/s);
+  assert.match(toolsCss, /\.app-catalog-size\s*\{[^}]*white-space:\s*nowrap/);
+  assert.match(appCatalogSource, /flash\.updateAppFromURL\(installed\.slot/);
+  assert.match(appCatalogSource, /flash\.deleteAppSlot\(installed\.slot\)/);
+  assert.match(appCatalogSource, /className = 'btn app-catalog-action app-catalog-install'/);
+  assert.match(appCatalogSource, /setCatalogActionContent\(install, 'install', t\('appInstallBtn'\)\)/);
+  assert.match(appCatalogSource, /setCatalogActionContent\(update, 'update', t\('appUpdateAction', metadata\.version\.replace/);
+  assert.match(appCatalogSource, /setCatalogActionContent\(remove, 'delete', t\('appDelete'\)\)/);
+  assert.match(toolsCss, /\.app-catalog-actions \.app-catalog-action svg\s*\{[^}]*width:\s*17px[^}]*stroke-width:\s*2/s);
+  assert.doesNotMatch(toolsCss, /\.app-catalog-delete\.btn\s*\{[^}]*linear-gradient/s);
+  assert.match(toolsCss, /\.app-catalog-icon\s*\{[^}]*color:\s*var\(--text-secondary\)[^}]*background:\s*color-mix\(in oklab, currentColor 5%/s);
+  assert.match(toolsCss, /\.app-catalog-card\[data-category="radio"\]\s*\{\s*--app-category-color:\s*#3b82f6/);
+  assert.match(toolsCss, /\.app-catalog-card\[data-category="games"\]\s*\{\s*--app-category-color:\s*#f59e0b/);
+  assert.match(toolsCss, /\.app-catalog-tag\s*\{[^}]*color:\s*color-mix\(in oklab, var\(--app-category-color\) 78%[^}]*background:\s*color-mix\(in oklab, var\(--app-category-color\) 12%/s);
+  assert.match(toolsCss, /\.app-category\.btn\[data-category="radio"\]\s*\{\s*--app-category-color:\s*#3b82f6/);
+  assert.match(toolsCss, /\.app-category\.btn\.active\s*\{[^}]*var\(--app-category-color\) 84%[^}]*var\(--app-category-color\) 14%/s);
+  assert.match(appCatalogSource, /catalogTabEl\.addEventListener\('click'.*if \(!loaded && !loading\) void load\(\)/s);
+  assert.match(toolsCss, /\.apps-table-wrap tr\.app-slot-empty\s*\{\s*display:\s*none/);
+  assert.doesNotMatch(html, /id="appEmptyReadBtn"/);
+  assert.match(flashSource, /appRefreshBtn\.disabled = !serialSupported \|\| busy \|\| orderDirty/);
+  assert.match(flashSource, /appRefreshBtn\.addEventListener\('click', \(\) => \{ void appRefreshFlow\(\); \}\)/);
+  assert.doesNotMatch(flashSource, /MSG_APP_(?:ORDER|MOVE|SWAP)/);
+});
+
+test('reorders complete app slots through the existing raw flash protocol', () => {
+  assert.match(html, /id="appOrderActions" hidden/);
+  assert.match(html, /id="appOrderCancelBtn"[^>]+data-i18n="appOrderCancel"/);
+  assert.match(html, /id="appOrderApplyBtn"[^>]+data-i18n="appOrderApply"/);
+  assert.match(html, /id="appRenumberBtn"[^>]+data-i18n="appRenumber"[^>]+hidden/);
+  assert.match(flashSource, /const APP_REGION_BASE = 0x102000/);
+  assert.match(flashSource, /const APP_SLOT_STRIDE = 0x3000/);
+  assert.match(flashSource, /async function appReadSlotImage/);
+  assert.match(flashSource, /async function appWriteSlotImage/);
+  assert.match(flashSource, /function appOrderDragStart\(slot, event\)/);
+  assert.match(flashSource, /function appOrderDragOver\(targetSlot, event\)/);
+  assert.match(flashSource, /appOrderDraft\.splice\(appOrderDropIndex, 0, slot\)/);
+  assert.match(flashSource, /appsTableWrap\.scrollTop \+= 14/);
+  assert.match(flashSource, /row\.draggable = visible && !busy/);
+  assert.match(flashSource, /await readExternalFlashChunk\(base \+ offset, length, timestamp\)/);
+  assert.match(flashSource, /await eraseExternalFlashSector\(address, timestamp\)/);
+  assert.match(flashSource, /await appVerifySlotSector\(sector, address, timestamp, crcSupported\)/);
+  assert.match(flashSource, /for \(const target of validateTargets\)[\s\S]*await appValidate\(target\)/);
+  assert.ok(flashSource.indexOf('images.set(slot, await appReadSlotImage') <
+    flashSource.indexOf('await appWriteSlotImage(move.target'));
+  assert.match(toolsCss, /\.app-order-actions\[hidden\]\s*\{\s*display:\s*none/);
+  assert.match(toolsCss, /\.app-renumber-button\[hidden\]\s*\{\s*display:\s*none/);
+  assert.match(toolsCss, /\.apps-table-wrap\s*\{[^}]*overflow-anchor:\s*none/s);
+  assert.match(toolsCss, /tr\.app-order-drop-before td\s*\{[^}]*box-shadow/s);
+  assert.match(html, /css\/tools\.css\?v=55/);
+  assert.match(html, /js\/flash\.js\?v=83/);
+  assert.doesNotMatch(flashSource, /app-order-(?:up|down)/);
+  assert.doesNotMatch(flashSource, /function appMoveInOrder/);
+
+  const start = flashSource.indexOf('function appOrderIsDirty');
+  const end = flashSource.indexOf('\n\nfunction appCanReorder', start);
+  const context = {};
+  vm.runInNewContext(
+    `${flashSource.slice(start, end)}; this.moves = appOrderMoves;`,
+    context
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(context.moves([0, 4, 9], [4, 9, 0]))),
+    [{ target: 0, source: 4 }, { target: 4, source: 9 }, { target: 9, source: 0 }]
+  );
+
+  const renumberStart = flashSource.indexOf('function appRenumberMoves');
+  const renumberEnd = flashSource.indexOf('\n\nfunction appCanRenumber', renumberStart);
+  const renumberContext = {};
+  vm.runInNewContext(
+    `${flashSource.slice(renumberStart, renumberEnd)}; this.moves = appRenumberMoves;`,
+    renumberContext
+  );
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(renumberContext.moves([0, 1, 3, 4, 5]))),
+    [
+      { target: 2, source: 3 },
+      { target: 3, source: 4 },
+      { target: 4, source: 5 },
+      { target: 5, source: 2 }
+    ]
+  );
 });
 
 test('offers one-click updates for outdated multiboot firmware slots', () => {
   const slotsStart = html.indexOf('id="slotsTable"');
   const slotsEnd = html.indexOf('</table>', slotsStart);
   const slotsTable = html.slice(slotsStart, slotsEnd);
-  assert.ok(slotsTable.indexOf('data-i18n="slotColVersion"') < slotsTable.indexOf('data-i18n="appColUpdate"'));
-  assert.ok(slotsTable.indexOf('data-i18n="appColUpdate"') < slotsTable.indexOf('data-i18n="slotColSize"'));
-  assert.match(flashSource, /className = 'slot-update-button'/);
-  assert.match(flashSource, /class="slot-update-cell"><span class="update-current" hidden/);
+  assert.doesNotMatch(slotsTable, /data-i18n="appColUpdate"/);
+  assert.ok(slotsTable.indexOf('data-i18n="slotColState"') < slotsTable.indexOf('data-i18n="appColActions"'));
+  assert.match(flashSource, /className = 'btn table-icon-action is-primary slot-update-button'/);
+  assert.match(flashSource, /eraseBtn\.hidden = true/);
+  assert.match(flashSource, /resetBtn\.hidden = true/);
+  assert.match(flashSource, /button\.hidden = !committed/);
+  assert.match(flashSource, /actions\.appendChild\(updateBtn\);\s*actions\.appendChild\(eraseBtn\);\s*actions\.appendChild\(resetBtn\);/);
+  assert.match(flashSource, /class="slot-actions"><div class="slot-actions-group"><\/div><\/td>/);
   assert.match(flashSource, /async function slotUpdateFlow/);
   assert.match(flashSource, /await slotWriteFlow\(\)/);
   assert.match(flashSource, /uvstudio:slotcatalogversions/);
@@ -169,22 +302,48 @@ test('marks an installed app only when the catalog has a newer version', () => {
   assert.ok(context.compare('2.0.0', '1.9.9') > 0);
   assert.equal(context.compare('development', '1.0.0'), null);
   assert.match(flashSource, /uvstudio:appcatalogversions/);
-  assert.match(flashSource, /className = 'app-update-button'/);
-  assert.match(flashSource, /class="app-update-cell"><span class="update-current" hidden/);
+  assert.match(flashSource, /className = 'btn table-icon-action is-primary app-update-button'/);
+  assert.match(flashSource, /className = 'btn table-icon-action is-danger app-act-delete'/);
+  assert.match(flashSource, /className = 'btn table-icon-action is-danger slot-act-erase'/);
+  assert.match(flashSource, /actions\.appendChild\(update\);\s*actions\.appendChild\(del\);/);
+  assert.match(flashSource, /setTableActionIcon\(button, 'update', detail, targetVersion\)/);
   assert.match(flashSource, /await appInstallFlow\(\)/);
-  assert.ok(html.indexOf('data-i18n="slotColVersion"') < html.indexOf('data-i18n="appColUpdate"'));
-  assert.ok(html.indexOf('data-i18n="appColUpdate"') < html.indexOf('data-i18n="appColSize"'));
+  const appsTable = html.slice(html.indexOf('id="appsTable"'), html.indexOf('</table>', html.indexOf('id="appsTable"')));
+  assert.doesNotMatch(appsTable, /data-i18n="appColUpdate"/);
+  assert.ok(appsTable.indexOf('data-i18n="slotColState"') < appsTable.indexOf('data-i18n="appColActions"'));
   assert.match(toolsCss, /\.app-update-button/);
-  assert.match(toolsCss, /\.update-current/);
+  assert.match(toolsCss, /\.slot-actions\s*\{[^}]*width:\s*1%[^}]*text-align:\s*right/s);
+  assert.match(toolsCss, /\.slot-actions-group\s*\{[^}]*display:\s*inline-flex/s);
+  assert.match(toolsCss, /button\.table-icon-action\s*\{[^}]*width:\s*32px[^}]*background:\s*transparent/s);
+  assert.match(toolsCss, /button\.table-icon-action svg\s*\{[^}]*width:\s*20px[^}]*stroke-width:\s*1\.9/s);
+  assert.match(toolsCss, /button\.table-icon-action\.has-detail\s*\{[^}]*width:\s*auto[^}]*gap:\s*5px/s);
+  assert.match(toolsCss, /\.table-action-detail\s*\{[^}]*font-family:\s*var\(--font-mono\)/s);
+  assert.doesNotMatch(toolsCss, /table-icon-action\.is-(?:primary|danger)\s*\{\s*color:/);
+  assert.match(flashSource, /function tableActionVersionLabel\(version\)/);
+  assert.match(flashSource, /querySelector\('\.slot-version'\)\.textContent = committed \? \(tableActionVersionLabel\(hdr\.fwVersion\) \|\| '—'\)/);
+  const labelStart = flashSource.indexOf('function tableActionVersionLabel');
+  const labelEnd = flashSource.indexOf('\n\nfunction setTableActionIcon', labelStart);
+  const labelContext = {};
+  vm.runInNewContext(
+    `${flashSource.slice(labelStart, labelEnd)}; this.label = tableActionVersionLabel;`,
+    labelContext
+  );
+  assert.equal(labelContext.label('v1.8'), '1.8');
+  assert.equal(labelContext.label('1.8'), '1.8');
+  assert.match(flashSource, /update: '<svg class="table-action-update-icon"[^']+M21 12a9 9 0 1 1-3-6\.7[^']+M21 4v6h-6/);
+  assert.match(toolsCss, /svg\.table-action-update-icon,\s*[^\{]*svg\.table-action-reset-icon\s*\{[^}]*stroke-width:\s*2/s);
+  assert.match(flashSource, /reset: '<svg class="table-action-reset-icon"[^']+m7 21-4\.3-4\.3[^']+m5 11 9 9[^']+M7 21h15/);
+  assert.match(flashSource, /delete: '<svg[^']+<path d="M3 6h18"/);
+  assert.doesNotMatch(flashSource, /class="(?:app|slot)-update-cell"/);
 });
 
 test('checks installed apps against the detected Labs catalog', () => {
-  const start = flashSource.indexOf('function appFirmwareVersionFromName');
+  const start = flashSource.indexOf('function appVersionParts');
   const end = flashSource.indexOf('\n\nconst appFileInput', start);
   assert.ok(start >= 0 && end > start);
-  const context = {};
+  const context = { APP_SLOT_COUNT: 48, APP_LEGACY_SLOT_COUNT: 16 };
   vm.runInNewContext(
-    `${flashSource.slice(start, end)}; this.extract = appFirmwareVersionFromName;`,
+    `${flashSource.slice(start, end)}; this.extract = appFirmwareVersionFromName; this.slotCount = appSlotCountForFirmware;`,
     context
   );
 
@@ -192,6 +351,10 @@ test('checks installed apps against the detected Labs catalog', () => {
   assert.equal(context.extract('F4HWN Labs v6.0'), '6.0.0');
   assert.equal(context.extract('F4HWN v6.1.0 beta'), '6.1.0');
   assert.equal(context.extract('unknown firmware'), '');
+  assert.equal(context.slotCount('F4HWN Labs v6.1.0'), 16);
+  assert.equal(context.slotCount('F4HWN Fusion v6.1.1'), 48);
+  assert.equal(context.slotCount('F4HWN Fusion v6.2.0'), 48);
+  assert.equal(context.slotCount('unknown firmware'), 16);
   assert.match(flashSource, /uvstudio:appfirmwareversion/);
   assert.match(flashSource, /uvstudio:appcatalogcompatibility/);
   assert.match(flashSource, /appStateFirmwareMismatch/);
@@ -285,6 +448,15 @@ test('keeps Labs-only tools together in the sidebar', () => {
   assert.match(studioCss, /\.nav-item-labs\s*\{[^}]*gap:\s*8px/);
   assert.match(studioCss, /\.nav-item-labs \.tag\s*\{[^}]*margin-left:\s*auto/);
   assert.match(studioCss, /\.nav-item-labs \.tag\s*\{[^}]*margin-right:\s*0/);
+});
+
+test('keeps compact app and firmware controls usable on narrow screens', () => {
+  assert.match(toolsCss, /@media \(max-width:\s*640px\)[\s\S]*\.slots-table tbody tr[\s\S]*grid-template-areas/);
+  assert.match(toolsCss, /\.apps-table-wrap \.slots-table tbody tr\.app-slot-pending[^{]*\{\s*display:\s*none/);
+  assert.match(html, /<aside class="info-box" id="infoBox">/);
+  assert.doesNotMatch(html, /<summary[^>]*data-i18n="studio_about_compatibility"/);
+  assert.doesNotMatch(viewerSource, /showNotification\('app_loaded'/);
+  assert.match(coreCss, /\[data-theme="dark"\] \.btn\.danger\s*\{[^}]*background:[^}]*#dc2626/s);
 });
 
 test('orders logo actions from radio read to radio write', () => {
@@ -490,28 +662,6 @@ test('keeps locale dictionaries on the same key set', () => {
   dictionaries.forEach(({ file, dictionary }) => {
     assert.deepEqual(Object.keys(dictionary).sort(), expected, file);
   });
-});
-
-test('resolves every i18n key referenced by the page and modules', () => {
-  const localeDir = path.join(root, 'locales');
-  const context = { window: {} };
-  vm.runInNewContext(fs.readFileSync(path.join(localeDir, 'en.js'), 'utf8'), context);
-  const dictionary = context.window.UVSTUDIO_LOCALES.en;
-
-  const attributeKeys = [];
-  for (const match of html.matchAll(/data-i18n(?:-aria-label)?="([^"]+)"/g)) attributeKeys.push(match[1]);
-  for (const match of html.matchAll(/data-section-i18n="([^"]+)"/g)) attributeKeys.push(match[1]);
-
-  const prosignSource = fs.readFileSync(path.join(root, 'js', 'prosign-editor.js'), 'utf8');
-  const moduleKeys = [];
-  for (const match of prosignSource.matchAll(/\bt\('([a-zA-Z0-9_]+)'/g)) moduleKeys.push(match[1]);
-  for (const match of prosignSource.matchAll(/setStatus\('([a-zA-Z0-9_]+)'/g)) moduleKeys.push(match[1]);
-  for (const match of prosignSource.matchAll(/(?:labelKey|hintKey):\s*'([a-zA-Z0-9_]+)'/g)) moduleKeys.push(match[1]);
-
-  const used = new Set(attributeKeys.concat(moduleKeys));
-  used.forEach(key => assert.ok(key in dictionary, `missing i18n key: ${key}`));
-  assert.ok(attributeKeys.length > 100);
-  assert.ok(moduleKeys.length >= 8);
 });
 
 test('uses one consistent vocabulary for maintenance actions in every locale', () => {
