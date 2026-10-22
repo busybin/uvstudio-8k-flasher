@@ -1,5 +1,9 @@
 # UV Studio — 8K overlay flasher
 
+<p align="center">
+  <a href="https://buymeacoffee.com/busybin"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" height="56"></a>
+</p>
+
 > A fork of [armel/uvstudio](https://armel.github.io/uvstudio/) (UV Studio by Armel FAUVEAU,
 > Apache-2.0) repointed at **our own 8K overlay firmware and Apps**, so that everything a
 > Quansheng UV-K1 / UV-K5 V3 owner needs is reachable from **one page** — no hunting for
