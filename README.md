@@ -11,7 +11,7 @@ Quansheng UV-K1 / UV-K5 V3. No installation, server or account — Web Serial on
 
 Desktop Chrome / Edge / Opera (or Firefox 151+), radio on a USB cable, same computer.
 
-1. **Flash the system** — *Flash Firmware* → **F4HWN Labs (8K fork) → v6.3.0+8K** → put the radio
+1. **Flash the system** — *Flash Firmware* → **F4HWN Labs (8K fork) → v6.3.0 · 115 KB** → put the radio
    in **DFU mode** → *Flash firmware*. Back up calibration and channels first
    (*Calibration* → dump, CHIRP for channels).
 2. **Flash the Apps** — *Apps* → *Application* → *Target slot* → *Install app*. Our **CW** and
