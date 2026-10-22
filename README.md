@@ -11,9 +11,15 @@ Quansheng UV-K1 / UV-K5 V3. No installation, server or account — Web Serial on
 
 Desktop Chrome / Edge / Opera (or Firefox 151+), radio on a USB cable, same computer.
 
-1. **Flash the system** — *Flash Firmware* → **F4HWN Labs (8K fork) → v6.3.0 · 115 KB** → put the radio
-   in **DFU mode** → *Flash firmware*. Back up calibration and channels first
-   (*Calibration* → dump, CHIRP for channels).
+1. **Flash the system** — either way works, same page:
+   - **A. DFU — replaces the firmware.** *Flash Firmware* → **F4HWN Labs (8K fork) → v6.3.0 · 115 KB** →
+     radio in **DFU mode** → *Flash firmware*. Back up calibration and channels first
+     (*Calibration* → dump, CHIRP for channels).
+   - **B. Multiboot slot — keeps the current firmware.** *Firmware Slots* → same build → *Target slot* →
+     *Write to slot* (external flash only, the radio stays usable). Then power off, hold **MENU**,
+     power on, pick the slot and restore it. Needs a multiboot-enabled firmware already running
+     (F4HWN **v6+**); one slot holds at most 118 KiB and you get four user slots plus the automatic
+     **Main** backup.
 2. **Flash the Apps** — *Apps* → *Application* → *Target slot* → *Install app*. Our **CW** and
    **SECMSG** are starred **★**; the 40 official Apps are in the same list. The radio must be in
    **normal mode**, with no overlay App running.
@@ -24,6 +30,11 @@ so new 8K firmware and App builds appear here without a page update.
 
 If you came from stock 4 KiB firmware, the slot layout changes: **install every App again**
 after step 1.
+
+> **Multiboot detail:** restoring a slot also selects its configuration bank — slot *N* uses
+> **`CFG N`**, while your usual settings sit in **`CFG M`**. The status bar shows which bank is
+> active; switch back with the radio's **SetCfg** menu. Never power the radio off while a slot is
+> being restored.
 
 ![App catalog with the 8K Apps starred](screenshots/flasher-apps.png)
 
