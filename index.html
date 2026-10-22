@@ -667,6 +667,30 @@
                         </select>
                         <button id="prosignLoad" type="button"><span data-i18n="prosigns_reload"></span></button>
                     </div>
+                    <p class="slot-meta" id="prosignStatus" aria-live="polite"></p>
+                    <p class="tab-description prosign-radio-note" data-i18n="prosigns_hint_radio"></p>
+                </section>
+                <section class="section">
+                    <table class="slots-table prosign-table">
+                        <thead>
+                            <tr>
+                                <th class="slot-col-idx" data-i18n="prosigns_key_col"></th>
+                                <th data-i18n="prosigns_value_col"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="prosignRows"></tbody>
+                    </table>
+                    <p class="slot-meta" id="prosignBudget"></p>
+                    <p class="tab-description" id="prosignHint"></p>
+                </section>
+                <section class="section">
+                    <div class="slots-write-row">
+                        <button id="prosignInstall" type="button" disabled><span data-i18n="prosigns_install"></span></button>
+                        <button id="prosignReset" type="button" disabled><span data-i18n="prosigns_reset"></span></button>
+                    </div>
+                    <p class="tab-description" data-i18n="prosigns_custom_note"></p>
+                </section>
+            </div>
 
             <section class="progress-container" id="progressContainer" aria-live="polite">
                 <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">

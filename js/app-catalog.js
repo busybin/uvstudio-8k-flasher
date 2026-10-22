@@ -19,10 +19,9 @@
   // packages plus our two overlay Apps); branch v630-8k.
   const REPO = 'busybin/uv-k1-k5v3-firmware-f4hwn-8k';
   // Stable branch only (our fork has no rolling development branch).
-  const BRANCH = (typeof globalThis !== 'undefined' && globalThis.UVStudioPreferences &&
-    typeof globalThis.UVStudioPreferences.catalogBranch === 'function')
-    ? globalThis.UVStudioPreferences.catalogBranch()
-    : 'v630-8k';
+  // Pinned: this fork has no rolling development branch, and the hidden
+  // developer switch would otherwise point the catalogs at upstream's `main`.
+  const BRANCH = 'v630-8k';
   const APPS_PATH = 'archive/apps';
   const API_ROOT = `https://api.github.com/repos/${REPO}/contents`;
   const RAW_ROOT = `https://raw.githubusercontent.com/${REPO}/${BRANCH}`;

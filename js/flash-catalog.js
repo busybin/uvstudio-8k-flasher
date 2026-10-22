@@ -23,10 +23,9 @@
   const ARCHIVE_PATH = 'archive';
   // No rolling development build in this fork: the stable branch only (the
   // development filename does not exist there, so no development entry appears).
-  const STABLE_BRANCH = (typeof globalThis !== 'undefined' && globalThis.UVStudioPreferences &&
-    typeof globalThis.UVStudioPreferences.catalogBranch === 'function')
-    ? globalThis.UVStudioPreferences.catalogBranch()
-    : 'v630-8k';
+  // Pinned: this fork has no rolling development branch (the developer switch
+  // would point at upstream's `main`).
+  const STABLE_BRANCH = 'v630-8k';
   const API_URL =
     `https://api.github.com/repos/${REPO}/contents/${ARCHIVE_PATH}` +
     `?ref=${encodeURIComponent(STABLE_BRANCH)}`;

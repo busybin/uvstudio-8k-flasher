@@ -880,3 +880,13 @@ test('gates every Labs-only feature on one Labs modal, before any confirmation',
   gateThen('async function runFactoryReset', "showFactoryResetModal('confirm'");
   gateThen("beginToolsOperation('restore-flash'", 'confirmExternalFlashRestore()');
 });
+
+test('exposes the fork Prosigns editor markup', () => {
+  ['prosignApp', 'prosignLoad', 'prosignStatus', 'prosignRows', 'prosignBudget',
+   'prosignHint', 'prosignInstall', 'prosignReset'].forEach(id => {
+    assert.match(html, new RegExp(`id="${id}"`));
+  });
+  assert.match(html, /id="prosigns-content"/);
+  assert.match(html, /js\/prosign-editor\.js\?v=\d+/);
+  assert.match(html, /css\/prosign-editor\.css\?v=\d+/);
+});
