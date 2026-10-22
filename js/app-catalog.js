@@ -16,36 +16,53 @@
   'use strict';
 
   // 8K fork: our own firmware repository holds archive/apps/v<fw>/ (official
-  // packages plus our two overlay Apps); branch v620-8k.
+  // packages plus our two overlay Apps); branch v630-8k.
   const REPO = 'busybin/uv-k1-k5v3-firmware-f4hwn-8k';
   // Stable branch only (our fork has no rolling development branch).
   const BRANCH = (typeof globalThis !== 'undefined' && globalThis.UVStudioPreferences &&
     typeof globalThis.UVStudioPreferences.catalogBranch === 'function')
     ? globalThis.UVStudioPreferences.catalogBranch()
-    : 'v620-8k';
+    : 'v630-8k';
   const APPS_PATH = 'archive/apps';
   const API_ROOT = `https://api.github.com/repos/${REPO}/contents`;
   const RAW_ROOT = `https://raw.githubusercontent.com/${REPO}/${BRANCH}`;
-  // 8K fork: our own overlay Apps are highlighted in the picker and the catalog.
-  // Matched by filename prefix so future versions (CW-V18, SECMSG-V26, …) keep it.
+  // 8K fork: our own overlay Apps are highlighted in the picker and the catalog,
+  // and labelled "CW" / "SECMSG" whatever version suffix the file carries.
   const OURS_PREFIXES = ['cw-v', 'secmsg-v'];
   const isOurs = name => OURS_PREFIXES.some(prefix => String(name || '').toLowerCase().startsWith(prefix));
+  const OUR_DETAILS = {
+    'cw-v': ['radio', 'CW transceiver: type a message, send it as Morse code and keep a 131-message history.', 'CW'],
+    'secmsg-v': ['radio', 'Encrypted messenger between two radios: Speck128, 43-message history, per-radio identity.', 'SECMSG']
+  };
+
+  function ourDetails(filename) {
+    const name = String(filename).toLowerCase();
+    for (const prefix of Object.keys(OUR_DETAILS)) {
+      if (!name.startsWith(prefix)) continue;
+      const [category, description, label] = OUR_DETAILS[prefix];
+      return {
+        category, description, label, author: 'busybin',
+        descriptionKey: `appDescription_${prefix.slice(0, -2)}`
+      };
+    }
+    return null;
+  }
   const FALLBACK_VERSION = {
-    version: '6.2.0',
-    directory: 'v6.2.0',
-    path: 'archive/apps/v6.2.0'
+    version: '6.3.0',
+    directory: 'v6.3.0',
+    path: 'archive/apps/v6.3.0'
   };
   const FALLBACK_APP_FILES = [
-    ['ACARSRX.app', 4516], ['APRSDIGI.app', 3960], ['APRSEdit.app', 7030],
-    ['APRSRX.app', 10868], ['APRSTX.app', 6918], ['ATISRX.app', 3968],
-    ['Beacon.app', 2929], ['Beam.app', 1404], ['Breakout.app', 3043],
-    ['BroadcastFM.app', 2415], ['CW-V17.app', 5420], ['CWDecode.app', 4587],
-    ['CWKeyer.app', 4119], ['Cube3D.app', 3744], ['EPIRB406.app', 4606],
-    ['FlashMap.app', 4170], ['FoxHunt.app', 2708], ['Minesweeper.app', 3926],
-    ['POCSAGRX.app', 3508], ['Plasma.app', 2361], ['RapidRoll.app', 3559],
-    ['SECMSG-V25.app', 6884], ['SSTV.app', 6898], ['SigFinder.app', 3617],
-    ['Snake.app', 3078], ['Sokoban.app', 4656], ['SondeM20.app', 4277],
-    ['SpaceImpact.app', 4485], ['Spectrum3D.app', 4106], ['SystemInfo.app', 5352],
+    ['ACARSRX.app', 4032], ['AFScope.app', 5566], ['AFSpectro.app', 4324], ['AISRX.app', 4466],
+    ['APRSDIGI.app', 3492], ['APRSEdit.app', 7126], ['APRSRX.app', 10392], ['APRSTX.app', 6797],
+    ['ATISDSCRX.app', 5518], ['ATISRX.app', 3484], ['Beacon.app', 3065], ['Beam.app', 1404],
+    ['Breakout.app', 3043], ['BroadcastFM.app', 2435], ['Cube3D.app', 3744], ['CW-V18.app', 5388],
+    ['CWDecode.app', 4577], ['CWKeyer.app', 3970], ['CWUSB.app', 4506], ['EPIRB406.app', 4278],
+    ['FlashMap.app', 4126], ['FoxHunt.app', 2596], ['HellMaze.app', 5086], ['KISSTNC.app', 4023],
+    ['Minesweeper.app', 3926], ['Plasma.app', 2361], ['POCSAGRX.app', 3872], ['RapidRoll.app', 3559],
+    ['Resistor.app', 3201], ['SECMSG-V26.app', 6884], ['SSTV.app', 6430], ['SigFinder.app', 3293],
+    ['Snake.app', 3078], ['Sokoban.app', 4656], ['SondeM10.app', 4512], ['SondeM20.app', 4590],
+    ['SondeRS41.app', 4330], ['SpaceImpact.app', 4485], ['Spectrum3D.app', 4106], ['SystemInfo.app', 5316],
     ['Tetris.app', 3936], ['ToneCall.app', 2920]
   ];
 
@@ -54,29 +71,39 @@
   // manifest without changing the firmware protocol.
   const APP_DETAILS = {
     acarsrx:     ['radio', 'Receive and decode ACARS aircraft messages.'],
+    afscope:     ['tools', 'Oscilloscope and tuner for the received audio: waveform, frequency counter and tone needle.'],
+    afspectro:   ['tools', 'Spectrum and sonogram of the received audio: main peaks and the level difference between two tones.'],
+    aisrx:       ['radio', 'Receive AIS ship reports: name, position, speed, course, destination and Inland data.'],
     aprsdigi:    ['radio', 'Relay APRS packets as a digipeater.'],
     aprsedit:    ['radio', 'Edit the APRS TX beacon: callsign, position, symbol and comment.'],
     aprsrx:      ['radio', 'Receive and decode APRS packets.'],
     aprstx:      ['radio', 'Transmit APRS beacons from the radio.'],
+    atisdscrx:   ['radio', 'Receive marine DSC calls on channel 70: distress, urgency, sender and position.'],
     atisrx:      ['radio', 'Identify inland-waterway boats from their ATIS signal.'],
     beacon:      ['radio', 'Send a configurable radio beacon.'],
     beam:        ['tools', 'Transfer a channel between compatible radios.'],
     breakout:    ['games', 'A compact version of the classic arcade game.'],
     broadcastfm: ['radio', 'Listen to broadcast FM stations.'],
     cwdecode:    ['radio', 'Decode Morse code in real time.'],
-    cwkeyer:     ['radio', 'Morse keyer with adjustable speed and tone.'],
+    cwkeyer:     ['radio', "Morse keyer using the radio's PTT and side keys."],
+    cwusb:       ['radio', 'Morse keyer for an external paddle connected through USB-C.'],
     cube3d:      ['demos', 'Animated 3D graphics demonstration.'],
     epirb406:    ['radio', 'Analyze and decode 406 MHz beacon frames.'],
     flashmap:    ['tools', 'Browse the external flash map: firmware slots, apps, active state and a hex viewer.'],
     foxhunt:     ['radio', 'Assist with radio direction finding.'],
+    hellmaze:    ['games', 'First-person shooter in a demon-haunted maze.'],
+    kisstnc:     ['tools', 'Use the radio as a KISS TNC over USB-C: APRSdroid or any KISS client, 1200-baud AFSK.'],
     minesweeper: ['games', 'The classic mine-clearing puzzle.'],
     plasma:      ['demos', 'Animated plasma graphics demonstration.'],
     pocsagrx:    ['radio', 'Receive POCSAG pager messages (DAPNET).'],
     rapidroll:   ['games', 'Fast vertical arcade game.'],
+    resistor:    ['tools', 'Read resistor color codes: value, tolerance and temperature coefficient (3 to 6 bands).'],
     sigfinder:   ['radio', 'Find signal direction and strength.'],
     snake:       ['games', 'Classic Snake for the radio keypad.'],
     sokoban:     ['games', 'The classic box-pushing puzzle.'],
+    sondem10:    ['radio', 'Decode Meteomodem M10 radiosondes: ID, position, altitude, temperature.'],
     sondem20:    ['radio', 'Decode Meteomodem M20 radiosondes: ID, position, altitude, temperature.'],
+    sonders41:   ['radio', 'Decode Vaisala RS41 radiosondes: ID, position, altitude, vertical speed, satellite count.'],
     spaceimpact: ['games', 'Side-scrolling space arcade game.'],
     spectrum3d:  ['radio', 'Experimental 3D spectrum visualization.'],
     sstv:        ['radio', 'Receive SSTV images on the radio display.'],
@@ -84,45 +111,13 @@
     tetris:      ['games', 'The classic falling-block puzzle.'],
     tonecall:    ['radio', 'Send configurable ZVEI or CCIR selective calling tone sequences.']
   };
-  const APP_DESCRIPTIONS_FR = {
-    acarsrx: 'Réception et décodage des messages ACARS des avions.',
-    aprsdigi: 'Relais des paquets APRS en digipeater.',
-    aprsedit: 'Édition de la balise d’APRS TX : indicatif, position, symbole et commentaire.',
-    aprsrx: 'Réception et décodage des paquets APRS.',
-    aprstx: 'Émission de balises APRS depuis la radio.',
-    atisrx: 'Identification des bateaux fluviaux par leur signal ATIS.',
-    beacon: 'Émission d’une balise radio configurable.',
-    beam: 'Transfert d’un canal entre radios compatibles.',
-    breakout: 'Une version compacte du jeu d’arcade classique.',
-    broadcastfm: 'Écoute des stations de radiodiffusion FM.',
-    cwdecode: 'Décodage du Morse en temps réel.',
-    cwkeyer: 'Manipulateur Morse à vitesse et tonalité réglables.',
-    cube3d: 'Démonstration graphique 3D animée.',
-    epirb406: 'Analyse et décodage des trames de balises 406 MHz.',
-    flashmap: 'Carte de la flash externe : slots firmware, apps, état actif et visualiseur hexadécimal.',
-    foxhunt: 'Assistance à la radiogoniométrie.',
-    minesweeper: 'Le classique jeu de déminage.',
-    plasma: 'Démonstration graphique plasma animée.',
-    pocsagrx: 'Réception des messages de radiomessagerie POCSAG (DAPNET).',
-    rapidroll: 'Jeu d’arcade vertical rapide.',
-    sigfinder: 'Recherche de la direction et du niveau d’un signal.',
-    snake: 'Le classique Snake adapté au clavier de la radio.',
-    sokoban: 'Le classique jeu de caisses à pousser.',
-    sondem20: 'Décodage des radiosondes Meteomodem M20 : identifiant, position, altitude, température.',
-    spaceimpact: 'Jeu d’arcade spatial à défilement horizontal.',
-    spectrum3d: 'Visualisation expérimentale du spectre en 3D.',
-    sstv: 'Réception d’images SSTV sur l’écran de la radio.',
-    systeminfo: 'Informations sur le firmware, la mémoire et la radio.',
-    tetris: 'Le classique jeu de blocs qui tombent.',
-    tonecall: 'Émission de séquences d’appel sélectif ZVEI ou CCIR configurables.'
-  };
   const APP_DISPLAY_NAMES = {
-    acarsrx: 'ACARS RX', aprsdigi: 'APRS DIGI', aprsedit: 'APRS Edit',
-    aprsrx: 'APRS RX', aprstx: 'APRS TX', atisrx: 'ATIS RX', broadcastfm: 'Broadcast FM',
-    cwdecode: 'CW Decode', cwkeyer: 'CW Keyer', cube3d: 'Cube 3D',
-    epirb406: 'EPIRB 406', flashmap: 'Flash Map', pocsagrx: 'POCSAG RX', sigfinder: 'Signal Finder', sondem20: 'Sonde M20',
+    acarsrx: 'ACARS RX', afscope: 'AF Scope', afspectro: 'AF Spectro', aisrx: 'AIS RX', aprsdigi: 'APRS DIGI', aprsedit: 'APRS Edit',
+    aprsrx: 'APRS RX', aprstx: 'APRS TX', atisdscrx: 'ATIS DSC RX', atisrx: 'ATIS RX', broadcastfm: 'Broadcast FM',
+    cwdecode: 'CW Decode', cwkeyer: 'CW Keyer', cwusb: 'CW USB', cube3d: 'Cube 3D',
+    epirb406: 'EPIRB 406', flashmap: 'Flash Map', hellmaze: 'Hell Maze', kisstnc: 'KISS TNC', pocsagrx: 'POCSAG RX', sigfinder: 'Signal Finder', sondem10: 'Sonde M10', sondem20: 'Sonde M20', sonders41: 'Sonde RS41',
     spaceimpact: 'Space Impact',
-    spectrum3d: 'Spectrum 3D', systeminfo: 'System Info', tonecall: 'ToneCall'
+    spectrum3d: 'Spectrum 3D', systeminfo: 'System Info', tonecall: 'Tone Call'
   };
   const APP_ACTION_ICONS = {
     install: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
@@ -131,10 +126,14 @@
   };
   const APP_ICONS = {
     acarsrx: '<path d="M12 3v16m0-11 7 5v1.5l-7-2.5m0-4-7 5v1.5l7-2.5m-3 8.5 3-1.5 3 1.5"/>',
+    afscope: '<rect x="3" y="4" width="18" height="13" rx="1.5"/><path d="M5.5 10.5c1.1-3.2 2.3-3.2 3.4 0s2.3 3.2 3.4 0 2.3-3.2 3.4 0 1.7 2.4 2.8 1.6M8 21h8M12 17v4"/>',
+    afspectro: '<path d="M3 10.5c1.5 0 2-5.5 3.5-5.5s1.6 4 3 4 1.7-6 3.2-6 1.8 6 3.3 6S18.5 8 21 8M3 14h18M3 17h6.5m3 0H21M3 20h3.5m3 0h4m3 0H21"/>',
+    aisrx: '<path d="M9 18 12 9l3 9-3-1.6zM12 9V3.5M8.7 4.5a4.5 4.5 0 0 0 0 6M15.3 4.5a4.5 4.5 0 0 1 0 6M3 21.5c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 4.5 0 3 1 4.5 0"/>',
     aprsdigi: '<path d="M8 20v-8m-3 8h6m-5-4 2-4 2 4M3.5 12a4.8 4.8 0 0 1 9 0M15 14V4m-2 2.5 2-2.5 2 2.5M19.5 4v10m-2-2.5 2 2.5 2-2.5"/>',
     aprsedit: '<path d="M8 20v-8m-3 8h6m-5-4 2-4 2 4M3.5 12a4.8 4.8 0 0 1 9 0M19.5 4 21 5.5l-5 5-2 .5.5-2zM14 14h7"/>',
     aprsrx: '<path d="M8 20v-8m-3 8h6m-5-4 2-4 2 4M3.5 12a4.8 4.8 0 0 1 9 0M17.5 4v10m-3-3 3 3 3-3"/>',
     aprstx: '<path d="M8 20v-8m-3 8h6m-5-4 2-4 2 4M3.5 12a4.8 4.8 0 0 1 9 0M17.5 14V4m-3 3 3-3 3 3"/>',
+    atisdscrx: '<circle cx="9" cy="15" r="6"/><circle cx="9" cy="15" r="2.6"/><path d="M10.8 13.2l2.4-2.4M7.2 13.2 4.8 10.8M7.2 16.8l-2.4 2.4M10.8 16.8l2.4 2.4M16 4.5a3.5 3.5 0 0 1 3.5 3.5M16 1.5a6.5 6.5 0 0 1 6.5 6.5"/><circle cx="16" cy="8" r="1.1" fill="currentColor" stroke="none"/>',
     atisrx: '<path d="M3 13.5h18l-2.5 4.5h-13zM7.5 13.5v-4h6l2.5 4M10.5 9.5V4.5M13.5 3.5a3.5 3.5 0 0 1 0 4M16 2a6.5 6.5 0 0 1 0 7M3 21.5c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 4.5 0 3 1 4.5 0"/>',
     beacon: '<path d="M12 20V10m-4 10h8m-6-4 2-6 2 6M8.2 9a5.2 5.2 0 0 1 7.6 0M5.5 6.5a9 9 0 0 1 13 0"/><circle cx="12" cy="7.5" r="1.2"/>',
     beam: '<rect x="3.5" y="6" width="5" height="12" rx="1.2"/><rect x="15.5" y="6" width="5" height="12" rx="1.2"/><path d="M5 9h2m10 0h2M10 10h4m-2-2 2 2-2 2m2 2h-4m2 2-2-2 2-2"/>',
@@ -142,18 +141,24 @@
     broadcastfm: '<rect x="3.5" y="7.5" width="17" height="11.5" rx="2"/><path d="m7 7.5 9-4M7 11h7m-7 3h5"/><circle cx="17" cy="13" r="2.2"/><path d="M17 16.5v.1"/>',
     cwdecode: '<circle cx="4" cy="5.5" r="1"/><path d="M7 5.5h4"/><circle cx="14" cy="5.5" r="1"/><path d="M17 5.5h4M12 9v4m-2-2 2 2 2-2M5 16h14M7 19h10M9 22h6"/>',
     cwkeyer: '<path d="M3 20h18M10 20v-6M6 11.5l12 2M17.5 20v-5"/><circle cx="4.5" cy="11.2" r="1.7"/><circle cx="10" cy="14" r="1.15"/><circle cx="17.5" cy="14" r=".8"/>',
+    cwusb: '<path d="M3 20h18M10 20v-6M6 11.5l12 2M17.5 20v-5"/><circle cx="4.5" cy="11.2" r="1.7"/><circle cx="10" cy="14" r="1.15"/><circle cx="17.5" cy="14" r=".8"/><path d="M9.6 6h11M13.3 6l3.2-3.2h.4M13.3 6l3.2 3.2h1.3"/><circle cx="8.2" cy="6" r="1.45" fill="currentColor" stroke="none"/><circle cx="18" cy="2.8" r="1.1" fill="currentColor" stroke="none"/><rect x="17.8" y="8.1" width="2.2" height="2.2" rx=".15" fill="currentColor" stroke="none"/><path d="m23 6-3-2v4z" fill="currentColor" stroke="none"/>',
     cube3d: '<path d="m12 3.5 7 4v8l-7 4-7-4v-8zm0 0v8m7-4-7 4-7-4m7 4v8"/>',
     epirb406: '<path d="M12 6V2M8.5 7.5A5.5 5.5 0 0 0 6 11m9.5-3.5A5.5 5.5 0 0 1 18 11M10 7h4l2 5v5a4 4 0 0 1-8 0v-5zM8 13h8M10 10h4M4 21c1.3-1 2.7-1 4 0s2.7 1 4 0 2.7-1 4 0 2.7 1 4 0"/>',
     flashmap: '<rect x="4" y="3" width="10" height="18" rx="1.5"/><path d="M4 8h10M4 12.5h10M4 16.5h10M17 5.5h3.5M17 10.2h2.5M17 14.5h3.5M17 18.8h2"/><path d="M6 5h6v1.4H6zM6 14.1h6v.9H6z" fill="currentColor" stroke="none"/>',
     foxhunt: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2.5v3m0 13v3m-9.5-9.5h3m13 0h3m-7-2.5L18 6l-3.5 3.5z"/>',
+    hellmaze: '<path d="M4 16V4h16M20 8v12H4M8 4v8m4-4h8m-8 0v8m-4 0h8m0-4v8"/>',
+    kisstnc: '<rect x="3" y="8" width="7" height="13" rx="1.3"/><path d="M5 8V3M5 12h3M5 14.5h3M10 17h2.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 1 15.5 11"/><rect x="15.5" y="4" width="6" height="12" rx="1.3"/><path d="M17.8 14h1.4"/>',
     minesweeper: '<path d="M4.5 4.5h15v15h-15zm5 0v15m5-15v15m-10-10h15m-15 5h15"/><circle cx="12" cy="12" r="1.65"/><path d="M12 8.8v1m0 4.4v1m-3.2-3.2h1m4.4 0h1"/>',
     plasma: '<path d="M3 7c2.2-3 4.5-3 6.7 0s4.5 3 6.7 0S20 5 21 6M3 12c2.2-3 4.5-3 6.7 0s4.5 3 6.7 0S20 10 21 11M3 17c2.2-3 4.5-3 6.7 0s4.5 3 6.7 0S20 15 21 16"/>',
     pocsagrx: '<rect x="3.5" y="9" width="17" height="11.5" rx="2"/><rect x="6.5" y="11.5" width="11" height="4" rx=".6"/><path d="M7 18h2.5m2 0h2.5M17 18h.1M8.8 6.2a4.6 4.6 0 0 1 6.4 0M6.3 3.6a8.2 8.2 0 0 1 11.4 0"/>',
     rapidroll: '<circle cx="12" cy="5.5" r="2.2"/><path d="M3.5 10.5h7m3 4h7m-13 4h8M10 9l2 2 2-2"/>',
+    resistor: '<path d="M1.5 12h2m17 0h2"/><path d="M3.5 10A2.5 2.5 0 0 1 6 7.5h1.5L9 9h6l1.5-1.5H18a2.5 2.5 0 0 1 2.5 2.5v4a2.5 2.5 0 0 1-2.5 2.5h-1.5L15 15H9l-1.5 1.5H6A2.5 2.5 0 0 1 3.5 14z"/><path d="M6.5 7.5v9m4-7.5v6m2.5-6v6m4.5-7.5v9"/>',
     sigfinder: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v2m0 13v2m-8.5-8.5h2m13 0h2M12 5l2 7-2 7-2-7z"/><path d="m12 5 2 7h-4z" fill="currentColor" stroke="none"/>',
     snake: '<path d="M5 17h5a2 2 0 0 0 2-2v-5a2 2 0 0 1 2-2h3"/><circle cx="18.3" cy="8" r="1.9"/><circle cx="18.8" cy="7.5" r=".3" fill="currentColor" stroke="none"/><path d="M5 17l-1.5-1.5M5 17l-1.5 1.5"/>',
     sokoban: '<circle cx="6.8" cy="5.9" r="1.8"/><path d="M6.3 8.2 5 14l-2 5.5M5 14l2.6 5.5M6 10.5l4.5 1.3"/><rect x="10.5" y="9.5" width="10" height="10" rx=".8"/><rect x="13.25" y="12.25" width="4.5" height="4.5" rx=".4"/>',
+    sondem10: '<path d="M12 2.5A4.5 4.5 0 0 1 16.5 7c0 2.7-2.6 4.6-4.5 5.5-1.9-.9-4.5-2.8-4.5-5.5A4.5 4.5 0 0 1 12 2.5zm0 10v4"/><rect x="10" y="16.5" width="4" height="4" rx=".5"/><path d="M16.5 16a3 3 0 0 1 0 5M19 14.5a6 6 0 0 1 0 8M7.5 16a3 3 0 0 0 0 5M5 14.5a6 6 0 0 0 0 8"/>',
     sondem20: '<path d="M12 2.5A4.5 4.5 0 0 1 16.5 7c0 2.7-2.6 4.6-4.5 5.5-1.9-.9-4.5-2.8-4.5-5.5A4.5 4.5 0 0 1 12 2.5zm0 10v4"/><rect x="10" y="16.5" width="4" height="4" rx=".5"/><path d="M16.5 16a3 3 0 0 1 0 5M19 14.5a6 6 0 0 1 0 8M7.5 16a3 3 0 0 0 0 5M5 14.5a6 6 0 0 0 0 8"/>',
+    sonders41: '<path d="M12 2.5A4.5 4.5 0 0 1 16.5 7c0 2.7-2.6 4.6-4.5 5.5-1.9-.9-4.5-2.8-4.5-5.5A4.5 4.5 0 0 1 12 2.5zm0 10v4"/><rect x="10" y="16.5" width="4" height="4" rx=".5"/><path d="M16.5 16a3 3 0 0 1 0 5M19 14.5a6 6 0 0 1 0 8M7.5 16a3 3 0 0 0 0 5M5 14.5a6 6 0 0 0 0 8"/>',
     spaceimpact: '<path d="M3.5 12 9 8.2l7 .8 4.5 3-4.5 3-7 .8zM9 8.2 7 5.5m2 10.3L7 18.5M16 9v6"/><path d="M2.5 8h2m-2 8h2"/>',
     spectrum3d: '<path d="m4 18 5 2 11-5-5-2zM6 16V9m3 8V6m3 9V4m3 10V8m3 7v-5M4 18l5 2m0 0 11-5"/>',
     sstv: '<rect x="3.5" y="7" width="17" height="12" rx="2"/><path d="m8 7-3-4m11 4 3-4M7 16l3-3 2.5 2 2.5-3 2 2.5M8 21h8"/><circle cx="16.5" cy="10.5" r="1"/>',
@@ -170,18 +175,35 @@
     return APP_ICONS[String(id)] || '';
   }
 
-  function setCatalogActionContent(button, icon, label) {
+  // `sizers` are every label an action button can show in the current
+  // language, stacked invisibly under the real one: all buttons then share the
+  // width of the longest label, so the action column is identical on every card.
+  function setCatalogActionContent(button, icon, label, sizers = []) {
     button.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${APP_ACTION_ICONS[icon] || ''}</svg>`;
+    const labels = document.createElement('span');
+    labels.className = 'app-catalog-action-label';
     const text = document.createElement('span');
     text.textContent = label;
-    button.appendChild(text);
+    labels.appendChild(text);
+    sizers.forEach(value => {
+      const sizer = document.createElement('span');
+      sizer.className = 'app-catalog-action-sizer';
+      sizer.setAttribute('aria-hidden', 'true');
+      sizer.textContent = value;
+      labels.appendChild(sizer);
+    });
+    button.appendChild(labels);
   }
 
   // Apps listed in APP_DETAILS are by DEFAULT_APP_AUTHOR unless stated here;
   // unknown apps get no author rather than a guessed one.
   const DEFAULT_APP_AUTHOR = 'armel';
   const APP_AUTHORS = {
+    atisdscrx:   'jdenoy',
+    cwusb:       'jdenoy',
     epirb406:    'jdenoy',
+    hellmaze:    'jdenoy',
+    kisstnc:     'jdenoy',
     minesweeper: 'Sarijen',
     sigfinder:   'jdenoy',
     snake:       'mrkusypl',
@@ -192,13 +214,15 @@
 
   function appDetails(filename) {
     const id = appCatalogId(filename);
+    const ours = ourDetails(filename);
+    if (ours) return { id, ...ours };
     const detail = APP_DETAILS[id] || ['other', 'Overlay app for F4HWN Labs.'];
     return {
       id,
       category: detail[0],
       description: detail[1],
+      descriptionKey: APP_DETAILS[id] ? `appDescription_${id}` : 'appDescription_other',
       author: APP_AUTHORS[id] || (APP_DETAILS[id] ? DEFAULT_APP_AUTHOR : ''),
-      descriptionFr: APP_DESCRIPTIONS_FR[id] || '',
       ...(APP_DISPLAY_NAMES[id] ? { label: APP_DISPLAY_NAMES[id] } : {})
     };
   }
@@ -378,7 +402,7 @@
     let freeSlots = 0;
     let installedApps = new Map();
     let catalogOperationPending = false;
-    let catalogProgress = null;   // { id, percent, shown } while a card installs/updates
+    let catalogProgress = null;   // { id, percent, shown, ... } while a card installs/updates
     const metadataCache = new Map();
 
     function t(key, ...values) {
@@ -456,14 +480,31 @@
     async function runCatalogOperation(operation, progressApp) {
       if (catalogOperationPending) return;
       catalogOperationPending = true;
-      catalogProgress = progressApp ? { id: appCatalogId(progressApp.name), percent: 0, shown: 0 } : null;
+      const progressId = progressApp ? appCatalogId(progressApp.name) : '';
+      const installedSnapshot = progressId ? installedApps.get(progressId) : null;
+      catalogProgress = progressApp ? {
+        id: progressId,
+        percent: 0,
+        shown: 0,
+        installedSnapshot: installedSnapshot ? { ...installedSnapshot } : null,
+        operationDone: false,
+        fillDone: false,
+        holdTimer: 0
+      } : null;
       renderCatalogCards();
+      let succeeded = false;
       try {
         await operation();
+        succeeded = true;
       } finally {
-        catalogOperationPending = false;
-        // On success the gauge finishes filling, then removes itself.
-        if (catalogProgress?.percent !== 100) catalogProgress = null;
+        const progress = catalogProgress;
+        if (!succeeded || !progress || progress.percent !== 100) {
+          catalogProgress = null;
+          catalogOperationPending = false;
+        } else {
+          progress.operationDone = true;
+          finishCatalogProgress(progress);
+        }
         renderCatalogCards();
       }
     }
@@ -490,6 +531,16 @@
     const CATALOG_PROGRESS_FILL_MS = 900;
     const CATALOG_PROGRESS_HOLD_MS = 700;
 
+    function finishCatalogProgress(progress) {
+      if (!progress.operationDone || !progress.fillDone || progress.holdTimer) return;
+      progress.holdTimer = setTimeout(() => {
+        if (catalogProgress !== progress) return;
+        catalogProgress = null;
+        catalogOperationPending = false;
+        renderCatalogCards();
+      }, CATALOG_PROGRESS_HOLD_MS);
+    }
+
     function animateCatalogProgress(progress, last) {
       requestAnimationFrame(now => {
         if (catalogProgress !== progress) return;
@@ -498,11 +549,9 @@
         const bar = cardsEl?.querySelector('.app-catalog-progress');
         if (bar) setCatalogProgressValue(bar, progress.shown);
         if (progress.shown >= 100) {
-          setTimeout(() => {
-            if (catalogProgress !== progress) return;
-            catalogProgress = null;
-            cardsEl?.querySelector('.app-catalog-progress')?.remove();
-          }, CATALOG_PROGRESS_HOLD_MS);
+          progress.animating = false;
+          progress.fillDone = true;
+          finishCatalogProgress(progress);
         } else if (progress.shown < progress.percent) {
           animateCatalogProgress(progress, now);
         } else {
@@ -546,18 +595,31 @@
         });
       }
       cardsEl.textContent = '';
+      const longestVersion = currentApps
+        .map(app => String(currentMetadata.get(appCatalogId(app.name))?.version || '').replace(/^v/i, ''))
+        .reduce((longest, version) => (version.length > longest.length ? version : longest), '0.0');
+      const actionSizers = [
+        t('appInstallBtn'),
+        t('appDelete'),
+        `${t('appUpdateShort')} → ${longestVersion}`
+      ];
       currentApps.forEach(app => {
-        const metadata = currentMetadata.get(appCatalogId(app.name));
-        const installed = installedApps.get(appCatalogId(app.name));
+        const appId = appCatalogId(app.name);
+        const metadata = currentMetadata.get(appId);
+        const progressState = catalogProgress?.id === appId ? catalogProgress : null;
+        const installed = progressState
+          ? progressState.installedSnapshot
+          : installedApps.get(appId);
         const state = catalogAppState(installed, metadata);
         const card = document.createElement('article');
         card.className = 'app-catalog-card';
         card.dataset.category = app.category;
         card.dataset.state = state;
-        const descriptionText = window.uvStudioI18n?.lang === 'fr' && app.descriptionFr
-          ? app.descriptionFr
-          : app.description;
-        card.dataset.search = `${app.label} ${app.description} ${app.descriptionFr || ''} ${app.category} ${app.author ? '@' + app.author : ''}`.toLocaleLowerCase();
+        const translatedDescription = t(app.descriptionKey);
+        const descriptionText = translatedDescription === app.descriptionKey
+          ? app.description
+          : translatedDescription;
+        card.dataset.search = `${app.label} ${descriptionText} ${app.description} ${app.category} ${app.author ? '@' + app.author : ''}`.toLocaleLowerCase();
 
         const icon = createAppIcon(app);
 
@@ -566,7 +628,8 @@
         const title = document.createElement('div');
         title.className = 'app-catalog-title';
         const name = document.createElement('strong');
-        name.textContent = (app.ours ? '\u2605 ' : '') + app.label;
+        name.textContent = app.label;
+        name.title = app.label;
         const tag = document.createElement('span');
         tag.className = 'app-catalog-tag';
         tag.textContent = categoryLabel(app.category);
@@ -580,6 +643,7 @@
         const description = document.createElement('p');
         description.className = 'app-catalog-description';
         description.textContent = descriptionText;
+        description.title = descriptionText;
         const meta = document.createElement('div');
         meta.className = 'app-catalog-meta';
         const version = document.createElement('span');
@@ -606,15 +670,13 @@
           author.title = t('studio_about_author');
           meta.appendChild(author);
         }
-        content.append(title, description, meta);
-
         const actions = document.createElement('div');
         actions.className = 'app-catalog-actions';
         if (!installed) {
           const install = document.createElement('button');
           install.type = 'button';
           install.className = 'btn app-catalog-action app-catalog-install';
-          setCatalogActionContent(install, 'install', t('appInstallBtn'));
+          setCatalogActionContent(install, 'install', t('appInstallBtn'), actionSizers);
           install.disabled = catalogOperationPending || !inventoryReady || freeSlots === 0;
           install.title = !inventoryReady
             ? t('appManagerScanBeforeInstall')
@@ -626,7 +688,9 @@
             const update = document.createElement('button');
             update.type = 'button';
             update.className = 'btn app-catalog-action app-catalog-update';
-            setCatalogActionContent(update, 'update', t('appUpdateAction', metadata.version.replace(/^v/i, '')));
+            const updateVersion = metadata.version.replace(/^v/i, '');
+            setCatalogActionContent(update, 'update', `${t('appUpdateShort')} → ${updateVersion}`, actionSizers);
+            update.title = t('appUpdateAction', updateVersion);
             update.disabled = catalogOperationPending || !inventoryReady;
             update.addEventListener('click', () => {
               const flash = window.UVStudioFlash;
@@ -642,7 +706,7 @@
           const remove = document.createElement('button');
           remove.type = 'button';
           remove.className = 'btn app-catalog-action app-catalog-delete';
-          setCatalogActionContent(remove, 'delete', t('appDelete'));
+          setCatalogActionContent(remove, 'delete', t('appDelete'), actionSizers);
           remove.disabled = catalogOperationPending || !inventoryReady;
           remove.addEventListener('click', () => {
             const flash = window.UVStudioFlash;
@@ -652,10 +716,13 @@
           });
           actions.appendChild(remove);
         }
-        if (catalogProgress?.id === appCatalogId(app.name)) {
-          actions.appendChild(createCatalogProgress(catalogProgress.shown));
-        }
+        content.append(title, description, meta);
         card.append(icon, content, actions);
+        // Same layout for every state: the gauge rides the card's bottom edge.
+        if (progressState) {
+          card.classList.add('is-busy');
+          card.appendChild(createCatalogProgress(progressState.shown));
+        }
         cardsEl.appendChild(card);
       });
       if (catalogTabCountEl) catalogTabCountEl.textContent = String(currentApps.length);

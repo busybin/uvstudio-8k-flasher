@@ -4,11 +4,11 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>UV Studio by F4HWN</title>
-    <script src="js/studio-version.js?v=1.9.0"></script>
+    <script src="js/studio-version.js?v=2.0.0"></script>
 <link rel="icon" type="image/svg+xml" href="assets/uv-studio-radio.svg">
 <link href="css/core.css?v=5" rel="stylesheet">
 <link href="css/viewer.css?v=13" rel="stylesheet">
-<link href="css/tools.css?v=55" rel="stylesheet">
+<link href="css/tools.css?v=57" rel="stylesheet">
 <link href="css/studio.css?v=26" rel="stylesheet">
 </head>
 <body data-theme="light">
@@ -534,7 +534,7 @@
                 <header class="app-manager-heading">
                     <div>
                         <span class="app-manager-eyebrow" data-i18n="appManagerEyebrow">APP MANAGER</span>
-                        <p class="tab-description" id="forkNotice" style="border-left:3px solid currentColor;padding-left:8px" data-i18n="fork_banner">8K overlay fork — installs Apps for the F4HWN 8K firmware (on-screen F4HWN v6.2.0+8K). Do not install these on the stock 4 KiB firmware — 8K Apps crash on start there. Firmware images offered below belong to the 8K fork as well.</p>
+                        <p class="tab-description" id="forkNotice" style="border-left:3px solid currentColor;padding-left:8px" data-i18n="fork_banner">8K overlay fork — installs Apps for the F4HWN 8K firmware (on-screen F4HWN v6.3.0+8K). Do not install these on the stock 4 KiB firmware — 8K Apps crash on start there. Firmware images offered below belong to the 8K fork as well.</p>
                         <p class="tab-description" data-i18n="appsDescription">Install only the tools you need. Apps are launched from the radio's F + 7 menu.</p>
                     </div>
                 </header>
@@ -550,13 +550,16 @@
                     </div>
                 </section>
 
-                <div class="app-manager-tabs" role="tablist" data-i18n-aria-label="appManagerTabsLabel" aria-label="App management">
-                    <button type="button" class="btn app-manager-tab active" id="appInstalledTab" role="tab" aria-selected="true" aria-controls="appInstalledPanel">
-                        <span data-i18n="appManagerInstalled">Installed</span><span class="app-tab-count" id="appInstalledTabCount">0</span>
-                    </button>
-                    <button type="button" class="btn app-manager-tab" id="appCatalogTab" role="tab" aria-selected="false" aria-controls="appCatalogPanel" tabindex="-1">
-                        <span data-i18n="appManagerCatalog">Catalog</span><span class="app-tab-count" id="appCatalogTabCount">—</span>
-                    </button>
+                <div class="app-manager-tabs-row">
+                    <div class="app-manager-tabs" role="tablist" data-i18n-aria-label="appManagerTabsLabel" aria-label="App management">
+                        <button type="button" class="btn app-manager-tab active" id="appInstalledTab" role="tab" aria-selected="true" aria-controls="appInstalledPanel">
+                            <span data-i18n="appManagerInstalled">Installed</span><span class="app-tab-count" id="appInstalledTabCount">0</span>
+                        </button>
+                        <button type="button" class="btn app-manager-tab" id="appCatalogTab" role="tab" aria-selected="false" aria-controls="appCatalogPanel" tabindex="-1">
+                            <span data-i18n="appManagerCatalog">Catalog</span><span class="app-tab-count" id="appCatalogTabCount">—</span>
+                        </button>
+                    </div>
+                    <div class="info-box app-order-notice" id="appOrderNotice" role="status" hidden data-i18n="appOrderApplyFirst">Apply or cancel the new app order before continuing.</div>
                 </div>
 
                 <section class="app-manager-panel active" id="appInstalledPanel" role="tabpanel" aria-labelledby="appInstalledTab">
@@ -664,30 +667,6 @@
                         </select>
                         <button id="prosignLoad" type="button"><span data-i18n="prosigns_reload"></span></button>
                     </div>
-                    <p class="slot-meta" id="prosignStatus" aria-live="polite"></p>
-                    <p class="tab-description prosign-radio-note" data-i18n="prosigns_hint_radio"></p>
-                </section>
-                <section class="section">
-                    <table class="slots-table prosign-table">
-                        <thead>
-                            <tr>
-                                <th class="slot-col-idx" data-i18n="prosigns_key_col"></th>
-                                <th data-i18n="prosigns_value_col"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="prosignRows"></tbody>
-                    </table>
-                    <p class="slot-meta" id="prosignBudget"></p>
-                    <p class="tab-description" id="prosignHint"></p>
-                </section>
-                <section class="section">
-                    <div class="slots-write-row">
-                        <button id="prosignInstall" type="button" disabled><span data-i18n="prosigns_install"></span></button>
-                        <button id="prosignReset" type="button" disabled><span data-i18n="prosigns_reset"></span></button>
-                    </div>
-                    <p class="tab-description" data-i18n="prosigns_custom_note"></p>
-                </section>
-            </div>
 
             <section class="progress-container" id="progressContainer" aria-live="polite">
                 <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -752,20 +731,14 @@
                         <dd data-i18n="studio_about_devices">UV-K5 V3 and UV-K1 with PY32F071 MCU</dd>
                     </div>
                 </dl>
-                <p class="about-copy" data-i18n="fork_about_copy">
-                    Communication goes straight to the radio through the Web Serial API — no
-                    installation, server or account. Desktop Chrome/Edge/ChromeOS only, with the
-                    radio plugged into this computer. This fork is published under the Apache
-                    License 2.0; our Apps require the 8K firmware and crash on start on the stock
-                    4&nbsp;KiB firmware.
-                </p>
+                <p class="about-copy" data-i18n="fork_about_copy"></p>
                 <nav class="about-links" aria-label="Project documents and repositories">
                     <a href="README.md" target="_blank" rel="noopener">README</a>
                     <a href="LICENSE" target="_blank" rel="noopener">LICENSE</a>
                     <a href="NOTICE" target="_blank" rel="noopener">NOTICE</a>
                     <a href="https://github.com/busybin/uv-k1-k5v3-firmware-f4hwn-8k" target="_blank" rel="noopener">8K firmware</a>
                     <a href="https://github.com/busybin/F4HWN-CW-Morse-App" target="_blank" rel="noopener">CW (Morse) App</a>
-                    <a href="https://github.com/busybin/F4HWN-Encrypted-Messenger-App" target="_blank" rel="noopener">Encrypted messenger App</a>
+                    <a href="https://github.com/busybin/F4HWN-Encrypted-Messenger-App" target="_blank" rel="noopener">SECMSG App</a>
                 </nav>
             </article>
         </section>
@@ -912,28 +885,28 @@
 </div>
 
 <!-- ═══════════ Scripts (all local, file://-friendly) ═══════════ -->
-<script src="locales/en.js?v=61"></script>
-<script src="locales/fr.js?v=61"></script>
-<script src="locales/it.js?v=61"></script>
-<script src="locales/es.js?v=61"></script>
-<script src="locales/de.js?v=61"></script>
-<script src="locales/pt.js?v=61"></script>
-<script src="locales/ru.js?v=61"></script>
-<script src="locales/pl.js?v=61"></script>
-<script src="locales/zh.js?v=61"></script>
-<script src="locales/nl.js?v=61"></script>
+<script src="locales/en.js?v=64"></script>
+<script src="locales/fr.js?v=64"></script>
+<script src="locales/it.js?v=64"></script>
+<script src="locales/es.js?v=64"></script>
+<script src="locales/de.js?v=64"></script>
+<script src="locales/pt.js?v=64"></script>
+<script src="locales/ru.js?v=64"></script>
+<script src="locales/pl.js?v=64"></script>
+<script src="locales/zh.js?v=64"></script>
+<script src="locales/nl.js?v=64"></script>
 <script src="js/studio-preferences.js?v=2"></script>
 <script src="js/studio-i18n.js?v=5"></script>
 <script src="js/studio-serial.js?v=2"></script>
 <script src="js/rf-log.js?v=4"></script>
     <script src="js/k5viewer.js?v=32"></script>
 <script src="js/keypad-detach.js?v=1"></script>
-<script src="js/flash.js?v=83"></script>
+<script src="js/flash.js?v=85"></script>
 <script src="js/flash-catalog.js?v=19"></script>
-<script src="js/app-catalog.js?v=17"></script>
+<script src="js/app-catalog.js?v=21"></script>
+<script src="js/studio.js?v=19"></script>
 <script src="js/prosign-editor.js?v=1"></script>
 <link rel="stylesheet" href="css/prosign-editor.css?v=2">
-<script src="js/studio.js?v=19"></script>
 <script src="js/studio-flash-counter.js?v=2"></script>
 </body>
 </html>

@@ -9,3 +9,6 @@ __pycache__/
 packages/
 # never publish session memory
 MEMORY.md
+# runtime self-signed cert pair (private key)
+cert.pem
+key.pem

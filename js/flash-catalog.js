@@ -26,11 +26,11 @@
   const STABLE_BRANCH = (typeof globalThis !== 'undefined' && globalThis.UVStudioPreferences &&
     typeof globalThis.UVStudioPreferences.catalogBranch === 'function')
     ? globalThis.UVStudioPreferences.catalogBranch()
-    : 'v620-8k';
+    : 'v630-8k';
   const API_URL =
     `https://api.github.com/repos/${REPO}/contents/${ARCHIVE_PATH}` +
     `?ref=${encodeURIComponent(STABLE_BRANCH)}`;
-  const DEVELOPMENT_BRANCH = 'v620-8k';
+  const DEVELOPMENT_BRANCH = 'v630-8k';
   const DEVELOPMENT_FILENAME = 'f4hwn.fusion.development.bin';
   const DEVELOPMENT_API_URL =
     `https://api.github.com/repos/${REPO}/contents/${ARCHIVE_PATH}/${DEVELOPMENT_FILENAME}` +

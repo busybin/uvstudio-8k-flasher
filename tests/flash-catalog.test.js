@@ -67,7 +67,7 @@ test('takes the rolling build only from the development branch response', () => 
   const currentDevelopment = {
     name: 'f4hwn.fusion.development.bin',
     size: 104000,
-    download_url: 'https://x/feature_update_v6/development.bin'
+    download_url: 'https://x/v630-8k/development.bin'
   };
   const stable = SAMPLE.filter(item => item.name !== staleMain.name);
   const merged = mergeCatalogFiles([...stable, staleMain], currentDevelopment);
@@ -77,10 +77,10 @@ test('takes the rolling build only from the development branch response', () => 
   assert.equal(development[0].download_url, currentDevelopment.download_url);
 });
 
-test('loads the rolling development build from the development branch', () => {
+test('keeps the development slot on the fork\'s stable branch', () => {
   const source = fs.readFileSync(require.resolve('../js/flash-catalog.js'), 'utf8');
-  assert.match(source, /const DEVELOPMENT_BRANCH = 'v620-8k';/);
-  assert.doesNotMatch(source, /armel\/uv-k1-k5v3-firmware-custom/);
+  assert.match(source, /const DEVELOPMENT_BRANCH = 'v630-8k';/);
+  assert.doesNotMatch(source, /feature_update_v5/);
 });
 
 test('routes model-specific and stock firmwares to their groups', () => {

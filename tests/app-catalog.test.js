@@ -38,8 +38,8 @@ test('adds presentation metadata without changing the app binary format', () => 
     id: 'cwdecode',
     category: 'radio',
     description: 'Decode Morse code in real time.',
+    descriptionKey: 'appDescription_cwdecode',
     author: 'armel',
-    descriptionFr: 'Décodage du Morse en temps réel.',
     label: 'CW Decode'
   });
   assert.equal(catalog.appDetails('Tetris.app').category, 'games');
@@ -53,39 +53,88 @@ test('adds presentation metadata without changing the app binary format', () => 
   assert.equal(catalog.appDetails('Minesweeper.app').author, 'Sarijen');
   assert.equal(catalog.appDetails('EPIRB406.app').author, 'jdenoy');
   assert.equal(catalog.appDetails('SigFinder.app').author, 'jdenoy');
+  assert.deepEqual(catalog.appDetails('CWKeyer.app'), {
+    id: 'cwkeyer',
+    category: 'radio',
+    description: "Morse keyer using the radio's PTT and side keys.",
+    descriptionKey: 'appDescription_cwkeyer',
+    author: 'armel',
+    label: 'CW Keyer'
+  });
+  assert.deepEqual(catalog.appDetails('CWUSB.app'), {
+    id: 'cwusb',
+    category: 'radio',
+    description: 'Morse keyer for an external paddle connected through USB-C.',
+    descriptionKey: 'appDescription_cwusb',
+    author: 'jdenoy',
+    label: 'CW USB'
+  });
+  assert.deepEqual(catalog.appDetails('SondeM10.app'), {
+    id: 'sondem10',
+    category: 'radio',
+    description: 'Decode Meteomodem M10 radiosondes: ID, position, altitude, temperature.',
+    descriptionKey: 'appDescription_sondem10',
+    author: 'armel',
+    label: 'Sonde M10'
+  });
+  assert.deepEqual(catalog.appDetails('SondeRS41.app'), {
+    id: 'sonders41',
+    category: 'radio',
+    description: 'Decode Vaisala RS41 radiosondes: ID, position, altitude, vertical speed, satellite count.',
+    descriptionKey: 'appDescription_sonders41',
+    author: 'armel',
+    label: 'Sonde RS41'
+  });
+  assert.equal(catalog.appIconSVG('sonders41'), catalog.appIconSVG('sondem10'));
   assert.deepEqual(catalog.appDetails('ToneCall.app'), {
     id: 'tonecall',
     category: 'radio',
     description: 'Send configurable ZVEI or CCIR selective calling tone sequences.',
+    descriptionKey: 'appDescription_tonecall',
     author: 'jdenoy',
-    descriptionFr: 'Émission de séquences d’appel sélectif ZVEI ou CCIR configurables.',
-    label: 'ToneCall'
+    label: 'Tone Call'
+  });
+  assert.deepEqual(catalog.appDetails('ATISDSCRX.app'), {
+    id: 'atisdscrx',
+    category: 'radio',
+    description: 'Receive marine DSC calls on channel 70: distress, urgency, sender and position.',
+    descriptionKey: 'appDescription_atisdscrx',
+    author: 'jdenoy',
+    label: 'ATIS DSC RX'
   });
   assert.equal(catalog.appDetails('ACARSRX.app').author, 'armel');
   assert.deepEqual(catalog.appDetails('FlashMap.app'), {
     id: 'flashmap',
     category: 'tools',
     description: 'Browse the external flash map: firmware slots, apps, active state and a hex viewer.',
+    descriptionKey: 'appDescription_flashmap',
     author: 'armel',
-    descriptionFr: 'Carte de la flash externe : slots firmware, apps, état actif et visualiseur hexadécimal.',
     label: 'Flash Map'
   });
   assert.equal(catalog.appDetails('APRSDIGI.app').label, 'APRS DIGI');
   assert.equal(catalog.appCatalogId('Spectrum-3D.app'), 'spectrum3d');
 });
 
-test('targets the stable versioned apps archive on GitHub', () => {
+test('targets the fork\'s versioned apps archive on GitHub', () => {
   assert.equal(
     catalog.contentsURL('archive/apps/v6.0.0'),
-    'https://api.github.com/repos/busybin/uv-k1-k5v3-firmware-f4hwn-8k/contents/archive/apps/v6.0.0?ref=v620-8k'
+    'https://api.github.com/repos/busybin/uv-k1-k5v3-firmware-f4hwn-8k/contents/archive/apps/v6.0.0?ref=v630-8k'
   );
 });
 
 test('keeps the current app catalog available when the GitHub API is unavailable', () => {
   const apps = catalog.fallbackApps();
-  assert.equal(apps.length, 32);
+  assert.equal(apps.length, 42);
   assert.equal(apps[0].label, 'ACARS RX');
-  assert.match(apps[0].url, /raw\.githubusercontent\.com\/.*\/v6\.2\.0\/ACARSRX\.app$/);
+  assert.match(apps[0].url, /raw\.githubusercontent\.com\/.*\/v6\.3\.0\/ACARSRX\.app$/);
+  // 8K fork: our own Apps carry a stable label and the star marker.
+  const cw = apps.find(app => app.name === 'CW-V18.app');
+  assert.equal(cw.label, 'CW');
+  assert.equal(cw.ours, true);
+  assert.equal(cw.descriptionKey, 'appDescription_cw');
+  const secmsg = apps.find(app => app.name === 'SECMSG-V26.app');
+  assert.equal(secmsg.label, 'SECMSG');
+  assert.equal(secmsg.ours, true);
   assert.deepEqual(catalog.fallbackApps({ version: '6.0.0', path: 'archive/apps/v6.0.0' }), []);
 });
 
@@ -135,12 +184,13 @@ test('compares app versions numerically and treats a release as newer than its p
 
 test('provides dedicated SVG pictograms for every catalog app and keeps a monogram fallback', () => {
   [
-    'acarsrx', 'aprsdigi', 'aprsedit', 'aprsrx', 'aprstx', 'atisrx', 'beacon', 'beam', 'breakout', 'broadcastfm',
-    'cwdecode', 'cwkeyer', 'cube3d', 'epirb406', 'flashmap', 'foxhunt', 'minesweeper',
-    'plasma', 'pocsagrx', 'rapidroll', 'sigfinder', 'snake', 'sokoban', 'sondem20', 'spaceimpact',
+    'acarsrx', 'aisrx', 'aprsdigi', 'aprsedit', 'aprsrx', 'aprstx', 'atisdscrx', 'atisrx', 'beacon', 'beam', 'breakout', 'broadcastfm',
+    'cwdecode', 'cwkeyer', 'cwusb', 'cube3d', 'epirb406', 'flashmap', 'foxhunt', 'hellmaze', 'minesweeper',
+    'plasma', 'pocsagrx', 'rapidroll', 'resistor', 'sigfinder', 'snake', 'sokoban', 'sondem10', 'sondem20', 'sonders41', 'spaceimpact',
     'spectrum3d', 'sstv', 'systeminfo', 'tetris', 'tonecall'
   ].forEach(id => {
     assert.match(catalog.appIconSVG(id), /<(?:path|circle)/);
   });
+  assert.ok(catalog.appIconSVG('cwusb').startsWith(catalog.appIconSVG('cwkeyer')));
   assert.equal(catalog.appIconSVG('futureapp'), '');
 });
